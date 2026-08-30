@@ -1,6 +1,6 @@
 # Delivery plan
 
-Updated: 2026-08-30 (Asia/Saigon)
+Updated: 2026-08-31 (Asia/Saigon)
 
 The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September 4, 2026 at 3:00 a.m. in Asia/Saigon. Judging access must remain available through September 21, 2026.
 
@@ -15,7 +15,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M3 — Scaffold pinned Next.js App Router, Tailwind, TypeScript, testing, CI, static-export, local assets, metadata, and preview deployment.
   - Dependencies: M2; authenticated free Vercel account.
   - Validation: install, lint, typecheck, unit smoke, E2E smoke, static build, direct `/demo` route, HTTPS preview.
-- [ ] M4 — Implement schemas, pure rehearsal state machine, canonicalization/hash, policy/conflict/turn/report engines, and fixtures.
+- [x] M4 — Implement schemas, pure rehearsal state machine, canonicalization/hash, policy/conflict/turn/report engines, and fixtures.
   - Validation: table and fast-check properties cover determinism, rule ordering, conflicts, signals, stop/pause, revisions, and hashes.
 - [ ] M5 — Implement transactional repositories, immutable version history, safe import/export, owner/agent application services, idempotency, and hydrated projections.
   - Dependencies: M4.

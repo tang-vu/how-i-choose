@@ -1,6 +1,6 @@
 # Progress log
 
-Updated: 2026-08-30 (Asia/Saigon)
+Updated: 2026-08-31 (Asia/Saigon)
 
 ## M0 — Environment and requirements verified
 
@@ -102,3 +102,34 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app
 
 Current next milestone: M4 — versioned domain model, deterministic rehearsal engine, and property tests.
+
+## M4 — Versioned domain model and deterministic rehearsal engine
+
+Work completed:
+
+- Added strict, bounded Zod schemas for profiles, active/draft/retired rules, signals, contexts, disclosures, scenarios, structured partner turns, events, sessions, and partner-adherence reports.
+- Added an explicit exhaustive rehearsal transition table with owner-only pause resume, pre-start owner approval, terminal Stop behavior for partner turns, debrief, staged patch review, and completion.
+- Added deterministic active-rule selection, equal-strength conflict detection, hard-boundary dominance, derived rehearsal policy, Unicode-safe word counting, and structured turn validation.
+- Enforced one-question turns, question word limits, option limits/distinctness, no preselection, allowed channel, no timers, required signal controls, pause/stop, pending acknowledgments, more-time, not-sure, information, and meaning-preserving rephrase behavior.
+- Added advisory-only phrase linting without claims about neutrality, coercion, emotion, comprehension, or capacity.
+- Added canonical JSON and SHA-256 profile hashing, monotonic ratification output, and partner-only adherence report categories.
+- Added the clearly labeled synthetic Maya profile, approved low-stakes workshop scenario, required signals, and a valid structured demo turn.
+
+Validation run:
+
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 5 files, 34 tests.
+- fast-check properties cover active-rule ordering independence, canonical hash stability under set-like ordering, and deterministic word counting.
+- Table/unit checks cover draft/retired irrelevance, block dominance, conflict symmetry, multi-question and word-limit rejection, missing signal controls, no timer/default, pause, Stop, more time, not-sure, information, rephrase, report categories, strict imports, and monotonic ratification.
+- E2E and build were not required for this browser-independent domain milestone; the previous scaffold evidence remains green.
+
+Remaining risks:
+
+- Revision compare-and-swap, idempotency, atomic persistence, immutable snapshots, import/export transactions, and allowlisted agent projections belong to M5 and are not yet implemented.
+- Policy controlled-value keys are intentionally closed by engine recognition; editor UI must offer controlled choices rather than unvalidated free-form permissions.
+- Real ChatGPT Site tools discovery remains unverified.
+
+Verified deployment URL: https://how-i-choose.vercel.app (still deployed at scaffold commit `e2e8aab` until this milestone is pushed and redeployed).
+
+Current next milestone: M5 — revision-safe persistence, history, and shared application services.
