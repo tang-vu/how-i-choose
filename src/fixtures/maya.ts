@@ -33,7 +33,7 @@ export const mayaProfile: CommunicationProfile = {
   revision: 1,
   ratifiedVersion: 1,
   rules: [
-    rule("rule-channel-text", "channel", "text", "Use text-first communication."),
+    rule("rule-channel-text", "channel", "text,speech", "Use text first; speech may also be offered."),
     rule("rule-one-question", "question_format", "question_count:1", "Ask exactly one question at a time."),
     rule("rule-twelve-words", "question_format", "max_question_words:12", "Use no more than 12 words per question."),
     rule("rule-two-options", "question_format", "max_options:2", "Offer at most two substantive options."),
@@ -104,7 +104,7 @@ export const mayaSession: RehearsalSession = {
   sessionVersion: 1,
   scenarioId: mayaScenario.id,
   contextId,
-  state: "active",
+  state: "ready",
   events: [],
 };
 

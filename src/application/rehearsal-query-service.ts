@@ -15,6 +15,7 @@ export class RehearsalQueryService {
     private readonly repository: WorkspaceRepository,
     private readonly ids: WorkspaceIds,
     private readonly dependencies: CommandDependencies,
+    private readonly source: ActivityReceipt["source"] = "webmcp",
   ) {}
 
   async getBrief() {
@@ -127,7 +128,24 @@ export class RehearsalQueryService {
 
   async getReport() {
     return this.read("get_rehearsal_report", async (workspace) => {
-      const report = buildRehearsalReport(workspace.session, this.dependencies.now());
+      const baseReport = buildRehearsalReport(workspace.session, this.dependencies.now());
+      const receipts = await this.repository.listReceipts();
+      const staleReceipt = receipts.find(({ code, source }) => source === "webmcp" && (code === "STALE_PROFILE_REVISION" || code === "STALE_SESSION_VERSION"));
+      const recoveredReceipt = staleReceipt
+        ? receipts.find(({ toolName, code, completedAt }) => toolName === "get_rehearsal_brief" && code === "OK" && completedAt >= staleReceipt.completedAt)
+        : undefined;
+      const report = recoveredReceipt && staleReceipt
+        ? {
+            ...baseReport,
+            entries: [...baseReport.entries, {
+              id: `report-revision-${staleReceipt.id}`,
+              category: "revision_conflict_recovered" as const,
+              label: "The agent reread current revisions after a stale write",
+              evidenceEventIds: [],
+              ruleIds: [],
+            }],
+          }
+        : baseReport;
       return {
         code: "OK",
         data: {
@@ -135,6 +153,7 @@ export class RehearsalQueryService {
           report,
           repairedViolationEvidenceIds: report.entries.filter(({ category }) => category === "violation_repaired").flatMap(({ evidenceEventIds }) => evidenceEventIds),
           unresolvedItems: report.entries.filter(({ category }) => category === "signal_still_unresolved"),
+          revisionRecoveryReceiptIds: recoveredReceipt && staleReceipt ? [staleReceipt.id, recoveredReceipt.id] : [],
         },
         violations: [],
         nextActions: this.validAgentActions(workspace),
@@ -199,7 +218,7 @@ export class RehearsalQueryService {
     const completedAt = this.dependencies.now();
     const activity: ActivityReceipt = {
       id: receiptId,
-      source: "webmcp",
+      source: this.source,
       toolName,
       startedAt,
       completedAt,

@@ -111,7 +111,8 @@ export function validatePartnerTurn(
     violations.push(violation("SESSION_NOT_ACTIVE", "The rehearsal is not active.", "Use a next action that is valid for the current session state."));
   }
 
-  if (policy.questionCount && turnQuestions.length !== policy.questionCount.value) {
+  const acknowledgmentOnly = Boolean(context.pendingSignal && hasIntent(turn, "acknowledge") && turnQuestions.length === 0);
+  if (policy.questionCount && turnQuestions.length !== policy.questionCount.value && !acknowledgmentOnly) {
     violations.push(violation(
       "QUESTION_COUNT",
       `Expected exactly ${policy.questionCount.value} question; received ${turnQuestions.length}.`,

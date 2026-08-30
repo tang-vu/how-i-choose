@@ -64,3 +64,11 @@ Version checks on 2026-08-30 found TypeScript 7 and ESLint 10 as newest registry
 ## D-014 — Dedicated Playwright port and production output
 
 Serve the static export on port 4173 with `reuseExistingServer: false`. Port 3000 was already occupied by an unrelated local application during the first run, which produced false failures. Reusing an arbitrary existing server was rejected because E2E evidence must belong to this repository's current output.
+
+## D-015 — Verification receipt before visible ratification
+
+Require a successful support-guide derivation receipt for the current profile revision before the owner ratification command can succeed. Both the visible human workflow and the read-only Site tool call the same query service, so the product remains fully usable without WebMCP. A decorative “verified” label with no command guard was rejected because it would not enforce the documented review order.
+
+## D-016 — Judge reset stops at Ready
+
+Reset the synthetic Maya session to `ready`, not `active`. The scenario is already visibly owner-approved, but a human or agent must explicitly start the rehearsal. Auto-starting was rejected because it hides an important owner-controlled state boundary and prevents the `start_approved_rehearsal` tool from being demonstrated honestly.

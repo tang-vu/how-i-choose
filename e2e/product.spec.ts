@@ -18,7 +18,7 @@ test("onboarding remains owner-controlled and remembers completion", async ({ pa
 
 test("profile rule edits persist after reload with a new revision", async ({ page }) => {
   await openWorkspace(page);
-  const rule = page.locator(".rule-card").filter({ hasText: "Use text-first communication." });
+  const rule = page.locator(".rule-card").filter({ hasText: "Use text first; speech may also be offered." });
   await rule.getByLabel("Rule wording").fill("Use text only during this rehearsal.");
   await rule.getByRole("button", { name: "Save rule" }).click();
   await expect(page.getByText("revision 2")).toBeVisible();
@@ -28,13 +28,19 @@ test("profile rule edits persist after reload with a new revision", async ({ pag
 
 test("human-only practice uses the deterministic partner validator", async ({ page }) => {
   await openWorkspace(page);
+  await page.getByRole("button", { name: "Start human rehearsal" }).click();
   await page.getByRole("button", { name: "Offer the sample one-question turn" }).click();
   await expect(page.getByText("Would morning or afternoon work better?")).toBeVisible();
   await expect(page.getByText(/Accepted under profile revision 1/)).toBeVisible();
+  await page.getByRole("button", { name: /Amber — not sure/ }).click();
+  await page.getByRole("button", { name: "Acknowledge selected signal" }).click();
+  await expect(page.locator(".turn-list")).toContainText("Is morning or afternoon a better time?");
+  await expect(page.getByRole("button", { name: "Offer the sample one-question turn" })).toBeEnabled();
 });
 
 test("the person selects signals, pauses, resumes, and stops from visible controls", async ({ page }) => {
   await openWorkspace(page);
+  await page.getByRole("button", { name: "Start human rehearsal" }).click();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.getByText("Paused.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Offer the sample one-question turn" })).toBeDisabled();
@@ -69,6 +75,7 @@ test("export and import remain explicit human file actions", async ({ page }) =>
 
 test("accessibility preferences change presentation without removing controls", async ({ page }) => {
   await openWorkspace(page);
+  await page.getByRole("button", { name: "Start human rehearsal" }).click();
   await page.getByLabel("High contrast").check();
   await page.getByLabel(/Quiet mode/).check();
   await page.getByLabel("Plain language").check();
@@ -78,4 +85,18 @@ test("accessibility preferences change presentation without removing controls", 
   await expect(page.locator(".product-app")).toHaveAttribute("data-quiet", "true");
   await expect(page.locator(".product-app")).toHaveAttribute("data-reduced-motion", "true");
   await expect(page.getByRole("button", { name: "Stop", exact: true }).first()).toBeVisible();
+});
+
+test("scenario templates require review and the last profile draft edit can be undone", async ({ page }) => {
+  await openWorkspace(page);
+  await page.getByLabel("Scenario template").selectOption("library-meetup");
+  await expect(page.getByRole("heading", { name: "Plan a library meetup" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review this scenario" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Reset judge demo" }).click();
+  await page.getByLabel("Allowed communication channels").selectOption("text");
+  await expect(page.getByLabel("Allowed communication channels")).toHaveValue("text");
+  await page.getByRole("button", { name: "Undo last draft edit" }).click();
+  await expect(page.getByLabel("Allowed communication channels")).toHaveValue("text,speech");
+  await expect(page.locator(".revision-strip")).toContainText("revision 3");
 });

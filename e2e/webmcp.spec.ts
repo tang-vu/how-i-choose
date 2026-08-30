@@ -45,11 +45,17 @@ test("top-level imperative tools register once and render a repaired agent turn"
   }) as { ok: boolean; profileRevision: number; sessionVersion: number };
   expect(brief).toEqual(expect.objectContaining({ ok: true, profileRevision: 1, sessionVersion: 1 }));
 
+  const started = await page.evaluate(async () => {
+    const tool = (window as unknown as { __howIChooseTools: Array<{ name: string; execute(input: unknown): Promise<unknown> }> }).__howIChooseTools.find(({ name }) => name === "start_approved_rehearsal")!;
+    return tool.execute({ expectedProfileRevision: 1, expectedSessionVersion: 1, scenarioId: "scenario-community-workshop", idempotencyKey: "browser-start" });
+  }) as { ok: boolean; sessionVersion: number };
+  expect(started).toEqual(expect.objectContaining({ ok: true, sessionVersion: 2 }));
+
   const rejected = await page.evaluate(async () => {
     const tool = (window as unknown as { __howIChooseTools: Array<{ name: string; execute(input: unknown): Promise<unknown> }> }).__howIChooseTools.find(({ name }) => name === "offer_partner_turn")!;
     return tool.execute({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       idempotencyKey: "browser-invalid-turn",
       segments: [
         { kind: "question", text: "Would you prefer the morning workshop or the afternoon workshop for this community event?" },
@@ -65,14 +71,14 @@ test("top-level imperative tools register once and render a repaired agent turn"
       rationale: "Intentional invalid demonstration turn.",
     });
   }) as { ok: boolean; code: string; sessionVersion: number; violations: Array<{ code: string }> };
-  expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 2 }));
+  expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 3 }));
   expect(rejected.violations.map(({ code }) => code)).toEqual(expect.arrayContaining(["QUESTION_COUNT", "QUESTION_WORD_LIMIT"]));
 
   const repaired = await page.evaluate(async () => {
     const tool = (window as unknown as { __howIChooseTools: Array<{ name: string; execute(input: unknown): Promise<unknown> }> }).__howIChooseTools.find(({ name }) => name === "offer_partner_turn")!;
     return tool.execute({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 2,
+      expectedSessionVersion: 3,
       idempotencyKey: "browser-repaired-turn",
       segments: [{ kind: "question", text: "Would morning or afternoon work better?" }],
       intentTags: ["choice"],
@@ -86,7 +92,7 @@ test("top-level imperative tools register once and render a repaired agent turn"
       rationale: "Repaired to one short literal question.",
     });
   }) as { ok: boolean; sessionVersion: number };
-  expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 3 }));
+  expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 4 }));
 
   await page.getByRole("button", { name: "Agent rehearsal" }).click();
   await expect(page.locator(".turn-list")).toContainText("Would morning or afternoon work better?");

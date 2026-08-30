@@ -18,7 +18,7 @@ import {
 function context(overrides: Partial<TurnValidationContext> = {}): TurnValidationContext {
   return {
     activeRules: mayaProfile.rules,
-    session: mayaSession,
+    session: { ...mayaSession, state: "active" },
     availableSignalMeanings: allRequiredSignalMeanings,
     ...overrides,
   };
@@ -153,7 +153,6 @@ describe("turn validator", () => {
     const result = validatePartnerTurn(
       acknowledgment,
       context({
-        activeRules: mayaProfile.rules.filter(({ id }) => id !== "rule-one-question"),
         session: { state: "active", pendingSignalEventId: "event-blue" },
         pendingSignal: { eventId: "event-blue", meaning: "need_more_time" },
       }),

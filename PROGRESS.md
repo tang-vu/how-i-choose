@@ -230,3 +230,37 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (currently M6 commit `df5467e`; production will be updated after this M7 commit is pushed).
 
 Current next milestone: M8 — the complete deterministic Maya judge path, eval fixtures, staged review, and full-state E2E coverage.
+
+## M8 — Complete Maya judge path and structured evals
+
+Work completed:
+
+- Changed deterministic judge reset to the approved `ready` state so the person or agent must explicitly start the session.
+- Modeled Maya’s initial channel as text and speech, then added a visible owner control that changes the protocol to text-only and increments both profile and session revisions.
+- Completed the 15-step agent path: scoped brief, readiness audit, approved start, intentional long two-question rejection, structured repair, visible accepted turn, person-selected amber signal, exact semantic read, meaning-preserving rephrase, owner profile edit, stale write rejection, fresh reread/adaptation, person-selected Stop, blocked later turn, partner-only report, staged improvement, per-item owner review, guide verification, and visible ratification.
+- Added report evidence for rule violations, repairs, signal acknowledgment, Stop enforcement, and stale-revision recovery after a fresh brief read. Consumed Pause/Stop signals are treated as visibly enforced rather than unresolved.
+- Required a successful support-guide derivation receipt for the current revision before owner ratification. The visible human button and WebMCP tool share the same query service.
+- Added three synthetic low-stakes scenario templates that always return to visible owner review, plus a visible one-step undo for draft profile edits through the owner application service.
+- Added human-only pending-signal acknowledgment, including a no-question acknowledgment that honors “need more time.”
+- Added a 180-day/no-review-date warning for support-guide previews.
+- Added eight strict machine-readable agent-flow fixtures covering valid/invalid turns, unsure repair, more time, mid-session revision, Stop, protocol suggestion, and ratification-tool absence.
+
+Validation run:
+
+- `pnpm lint` passed after the final purity correction.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 8 files, 61 tests.
+- `pnpm test:e2e` passed: 26 tests across desktop and narrow Chromium.
+- The complete judge path passed in both viewport projects and axe found zero serious or critical issues in stopped and post-review/ratified states.
+- Product E2E additionally covers human-only acknowledgment, multiple scenario templates, draft undo, accessibility preferences, blank review, persistence, import/export, and print-trigger availability.
+- `pnpm build` passed as the Playwright production-server prerequisite; an explicit final build follows before commit.
+
+Remaining risks:
+
+- Real ChatGPT built-in browser discovery remains unverified until the M8 deployment is live and can be opened in an eligible desktop client.
+- Manual keyboard, screen-reader, forced-colors, reduced-motion, and 400% reflow checklists remain release tasks despite automated coverage.
+- Security/privacy documentation, full README, screenshot, submission copy, demo timing, dependency/secret audits, and final remote smoke checks remain for M9–M10.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently M7 commit `0adae2e`; production will be updated after this M8 commit is pushed).
+
+Current next milestone: M9 — security/privacy hardening, complete documentation, screenshot, release automation, submission copy, and timed demo script.

@@ -58,11 +58,11 @@ export function buildRehearsalPolicy(activeRules: readonly CommunicationRule[]):
   return {
     allowedChannels: channelRules
       .filter(({ effect }) => effect === "require" || effect === "prefer")
-      .map(({ controlledValue }) => controlledValue)
+      .flatMap(({ controlledValue }) => controlledValue.split(",").map((channel) => channel.trim()).filter(Boolean))
       .toSorted(),
     blockedChannels: channelRules
       .filter(({ effect }) => effect === "block" || effect === "avoid")
-      .map(({ controlledValue }) => controlledValue)
+      .flatMap(({ controlledValue }) => controlledValue.split(",").map((channel) => channel.trim()).filter(Boolean))
       .toSorted(),
     channelRuleIds: channelRules.map(({ id }) => id).toSorted(),
     questionCount: numericConstraint(rules, "question_count", "exact"),

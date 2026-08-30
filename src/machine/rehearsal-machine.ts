@@ -13,11 +13,13 @@ export type RehearsalAction =
   | "stage_protocol_patch"
   | "request_owner_patch_review"
   | "owner_complete"
-  | "owner_complete_without_patch";
+  | "owner_complete_without_patch"
+  | "owner_choose_scenario_template";
 
 const transitionTable = {
   scenario_draft: {
     submit_scenario: "awaiting_owner_review",
+    owner_choose_scenario_template: "scenario_draft",
   },
   awaiting_owner_review: {
     owner_approve_scenario: "ready",
@@ -26,6 +28,7 @@ const transitionTable = {
   ready: {
     start_approved_rehearsal: "active",
     owner_stop: "stopped",
+    owner_choose_scenario_template: "scenario_draft",
   },
   active: {
     owner_pause: "paused",

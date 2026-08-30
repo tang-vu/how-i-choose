@@ -6,6 +6,7 @@ import {
   type CommandDependencies,
 } from "@/application/command-bus";
 import { OwnerWorkflowService, type WorkspaceIds } from "@/application/owner-workflow-service";
+import { RehearsalQueryService } from "@/application/rehearsal-query-service";
 import { hashProfile } from "@/domain/canonicalize";
 import { mayaProfile, validMayaTurn } from "@/fixtures/maya";
 import { HowIChooseDatabase } from "@/persistence/db";
@@ -163,9 +164,10 @@ describe("atomic application services", () => {
   });
 
   it("records the exact owner-selected semantic signal and exposes it un-inferred", async () => {
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-for-signal" });
     const selected = await owner.selectSignal({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       idempotencyKey: "select-amber",
       signalId: "signal-amber",
     });
@@ -181,11 +183,12 @@ describe("atomic application services", () => {
   });
 
   it("rejects invalid partner turns while recording non-visible adherence evidence", async () => {
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-for-invalid" });
     const invalid = structuredClone(validMayaTurn);
     invalid.segments.push({ kind: "question", text: "Which reminder should I add?" });
     const result = await agent.offerPartnerTurn({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       idempotencyKey: "invalid-turn",
       turn: invalid,
     });
@@ -194,18 +197,19 @@ describe("atomic application services", () => {
 
     expect(result.code).toBe("INVALID_PARTNER_TURN");
     expect(result.violations).toEqual(expect.arrayContaining([expect.objectContaining({ code: "QUESTION_COUNT" })]));
-    expect(workspace?.session.events).toEqual([
+    expect(workspace?.session.events).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: "partner_turn_rejected", violationCodes: expect.arrayContaining(["QUESTION_COUNT"]) }),
-    ]);
+    ]));
     expect(workspace?.session.events.some(({ type }) => type === "partner_turn_accepted")).toBe(false);
-    expect(workspace?.session.sessionVersion).toBe(2);
+    expect(workspace?.session.sessionVersion).toBe(3);
     expect(receipts[0]).toEqual(expect.objectContaining({ toolName: "offer_partner_turn", code: "INVALID_PARTNER_TURN" }));
   });
 
   it("accepts a valid partner turn once and persists visible evidence", async () => {
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-for-valid" });
     const command = {
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       idempotencyKey: "valid-turn",
       turn: validMayaTurn,
     } as const;
@@ -220,6 +224,8 @@ describe("atomic application services", () => {
   });
 
   it("ratifies only through the owner service and preserves immutable history", async () => {
+    const queries = new RehearsalQueryService(repository, ids, dependencies, "owner_ui");
+    await queries.verifySupportGuide();
     const result = await owner.ratify({
       expectedProfileRevision: 1,
       expectedSessionVersion: 1,
@@ -233,6 +239,50 @@ describe("atomic application services", () => {
     expect(versions[0]?.profile.revision).toBe(1);
     expect(versions[1]?.profile.revision).toBe(2);
     expect(versions[0]?.hash).not.toBe(versions[1]?.hash);
+  });
+
+  it("requires a current support-guide derivation receipt before ratification", async () => {
+    const result = await owner.ratify({
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 1,
+      idempotencyKey: "ratify-without-verification",
+    });
+    expect(result).toEqual(expect.objectContaining({ ok: false, code: "OWNER_REVIEW_REQUIRED" }));
+    expect(result.violations).toEqual(expect.arrayContaining([expect.objectContaining({ code: "SUPPORT_GUIDE_NOT_VERIFIED" })]));
+    expect(await repository.listProfileVersions(ids.profileId)).toHaveLength(1);
+  });
+
+  it("undoes one visible draft edit through the owner service with monotonic revisions", async () => {
+    const before = (await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId))!.profile;
+    await owner.updateProfileTitle({
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 1,
+      idempotencyKey: "rename-before-undo",
+      title: "Temporary draft title",
+    });
+    const undone = await owner.restorePreviousDraft({
+      expectedProfileRevision: 2,
+      expectedSessionVersion: 2,
+      idempotencyKey: "undo-rename",
+      previousProfile: before,
+    });
+    const workspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
+    expect(undone).toEqual(expect.objectContaining({ ok: true, profileRevision: 3, sessionVersion: 3 }));
+    expect(workspace?.profile.title).toBe(before.title);
+    expect(workspace?.profile.revision).toBe(3);
+  });
+
+  it("loads another low-stakes scenario template and returns it to visible review", async () => {
+    const chosen = await owner.chooseScenarioTemplate({
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 1,
+      idempotencyKey: "choose-library-template",
+      templateId: "library-meetup",
+    });
+    const workspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
+    expect(chosen).toEqual(expect.objectContaining({ ok: true, data: { templateId: "library-meetup", state: "scenario_draft" } }));
+    expect(workspace?.scenario).toEqual(expect.objectContaining({ title: "Plan a library meetup", status: "draft", synthetic: true }));
+    expect(workspace?.session.state).toBe("scenario_draft");
   });
 
   it("round-trips import/export without changing canonical hashes", async () => {

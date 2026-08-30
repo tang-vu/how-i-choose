@@ -52,16 +52,16 @@ export function buildRehearsalReport(
   }
 
   for (const signal of selectedSignals) {
-    if (acknowledgedIds.has(signal.id)) {
+    if (acknowledgedIds.has(signal.id) || signal.consumed) {
       const acknowledgment = acknowledgments.find(({ signalEventId }) => signalEventId === signal.id);
-      entries.push(entry(`report-signal-${signal.id}`, "signal_acknowledged", `Signal '${signal.meaning}' was acknowledged`, acknowledgment ? [signal, acknowledgment] : [signal]));
+      entries.push(entry(`report-signal-${signal.id}`, "signal_acknowledged", signal.consumed ? `Signal '${signal.meaning}' was enforced by the visible owner control` : `Signal '${signal.meaning}' was acknowledged`, acknowledgment ? [signal, acknowledgment] : [signal]));
     } else {
       entries.push(entry(`report-unresolved-${signal.id}`, "signal_still_unresolved", `Signal '${signal.meaning}' still needs acknowledgment`, [signal]));
     }
   }
 
   const unresolvedSignalEventIds = selectedSignals
-    .filter(({ id }) => !acknowledgedIds.has(id))
+    .filter(({ id, consumed }) => !consumed && !acknowledgedIds.has(id))
     .map(({ id }) => id)
     .toSorted();
 

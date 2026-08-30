@@ -7,14 +7,17 @@ import { useStore } from "zustand";
 import { AgentRehearsalService } from "@/application/agent-rehearsal-service";
 import { browserCommandDependencies } from "@/application/command-bus";
 import { OwnerWorkflowService, type WorkspaceIds } from "@/application/owner-workflow-service";
+import { RehearsalQueryService } from "@/application/rehearsal-query-service";
 import { BrandMark } from "@/components/brand-mark";
 import { WebMcpBridge, workspaceChangedEvent } from "@/components/webmcp-bridge";
 import { findActiveRuleConflicts } from "@/domain/conflict-engine";
-import { activeRulesForContext, isFieldDisclosed } from "@/domain/profile";
+import { activeRulesForContext, isFieldDisclosed, type CommunicationProfile } from "@/domain/profile";
 import { buildAgentProfileProjection } from "@/domain/provenance";
 import { buildRehearsalReport } from "@/domain/report-engine";
+import type { StructuredPartnerTurn } from "@/domain/rehearsal";
 import type { SignalMeaning } from "@/domain/signals";
 import { validMayaTurn } from "@/fixtures/maya";
+import { scenarioTemplates } from "@/fixtures/scenarios";
 import { getDatabase, type ActivityReceipt, type ProfileVersionRecord } from "@/persistence/db";
 import { exportWorkspaceJson, importWorkspaceJson } from "@/persistence/import-export";
 import { WorkspaceRepository } from "@/persistence/repository";
@@ -48,6 +51,48 @@ function commandInput(workspace: NonNullable<ReturnType<typeof appStore.getState
   };
 }
 
+function humanAcknowledgmentTurn(eventId: string, meaning: SignalMeaning): StructuredPartnerTurn {
+  const base = {
+    channel: "text" as const,
+    responseTimerSeconds: null,
+    acknowledgesSignalEventId: eventId,
+    rationale: "A human practice partner explicitly acknowledges the person's selected signal.",
+  };
+  if (meaning === "need_more_time" || meaning === "yes" || meaning === "no" || meaning === "custom") {
+    return {
+      ...base,
+      segments: [{ kind: "statement", text: meaning === "need_more_time" ? "I will wait until you choose another visible signal." : "I heard your signal and will not add meaning to it." }],
+      intentTags: ["acknowledge"],
+      responseOptions: [],
+    };
+  }
+  if (meaning === "need_information") {
+    return {
+      ...base,
+      segments: [
+        { kind: "statement", text: "The morning starts at nine. The afternoon starts at two." },
+        { kind: "question", text: "Would morning or afternoon work better?" },
+      ],
+      intentTags: ["acknowledge", "provide_information"],
+      responseOptions: [
+        { id: "human-morning", label: "Morning", value: "morning", preselected: false },
+        { id: "human-afternoon", label: "Afternoon", value: "afternoon", preselected: false },
+      ],
+      meaningKey: "choose-workshop-time",
+    };
+  }
+  return {
+    ...base,
+    segments: [{ kind: "question", text: "Is morning or afternoon a better time?" }],
+    intentTags: ["acknowledge", "rephrase"],
+    responseOptions: [
+      { id: "human-morning-rephrased", label: "Morning", value: "morning", preselected: false },
+      { id: "human-afternoon-rephrased", label: "Afternoon", value: "afternoon", preselected: false },
+    ],
+    meaningKey: "choose-workshop-time",
+  };
+}
+
 export function WorkspaceApp() {
   const workspace = useStore(appStore, (state) => state.workspace);
   const hydration = useStore(appStore, (state) => state.hydration);
@@ -59,6 +104,10 @@ export function WorkspaceApp() {
   );
   const humanPartner = useMemo(
     () => new AgentRehearsalService(repository, workspaceIds, browserCommandDependencies, "owner_ui"),
+    [repository],
+  );
+  const ownerQueries = useMemo(
+    () => new RehearsalQueryService(repository, workspaceIds, browserCommandDependencies, "owner_ui"),
     [repository],
   );
   const [receipts, setReceipts] = useState<ActivityReceipt[]>([]);
@@ -73,6 +122,8 @@ export function WorkspaceApp() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [textScale, setTextScale] = useState<1 | 1.15 | 1.3>(1);
   const [patchDrafts, setPatchDrafts] = useState<Record<string, string>>({});
+  const [undoProfile, setUndoProfile] = useState<CommunicationProfile | null>(null);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     await appStore.getState().refresh(repository, workspaceIds);
@@ -92,6 +143,7 @@ export function WorkspaceApp() {
       }
       await refresh();
       setOnboarding(localStorage.getItem("how-i-choose-onboarded") !== "yes");
+      setCurrentTime(Date.now());
       setNotice("Your local workspace is ready.");
     };
     void initialize();
@@ -149,6 +201,10 @@ export function WorkspaceApp() {
   const report = buildRehearsalReport(session, new Date().toISOString());
   const latestVersion = versions.at(-1);
   const guideIsDraft = !latestVersion || latestVersion.revision !== profile.revision;
+  const guideVerified = receipts.some(
+    (receipt) => receipt.toolName === "verify_support_guide" && receipt.code === "OK" && receipt.profileRevision === profile.revision,
+  );
+  const guideReviewIsStale = currentTime !== null && (!profile.reviewedAt || currentTime - new Date(profile.reviewedAt).getTime() > 180 * 24 * 60 * 60 * 1_000);
   const pendingSignal = session.pendingSignalEventId
     ? session.events.find((event) => event.id === session.pendingSignalEventId)
     : undefined;
@@ -163,9 +219,11 @@ export function WorkspaceApp() {
 
   const resetSample = () => run(async () => {
     await owner.resetSyntheticDemo();
+    setUndoProfile(null);
   }, "Synthetic Maya demo restored to its starting state.");
   const resetBlank = () => run(async () => {
     await owner.resetBlankProfile();
+    setUndoProfile(null);
   }, "Blank self-authored profile created.");
 
   const selectSignal = (signalId: string) =>
@@ -320,6 +378,10 @@ export function WorkspaceApp() {
           <div className="toolbar" aria-label="Workspace actions">
             <button className="button secondary" disabled={busy} onClick={() => void resetSample()} type="button">Reset judge demo</button>
             <button className="button secondary" disabled={busy} onClick={() => void resetBlank()} type="button">New blank profile</button>
+            <button className="button secondary" disabled={busy || !undoProfile} onClick={() => {
+              if (!undoProfile) return;
+              void run(() => owner.restorePreviousDraft({ ...commandInput(workspace), previousProfile: undoProfile }), "Your last profile draft edit was undone.").then(() => setUndoProfile(null));
+            }} type="button">Undo last draft edit</button>
             <button className="button secondary" onClick={() => void exportJson()} type="button">Export JSON</button>
             <label className="button secondary file-button">Import JSON<input accept="application/json,.json" onChange={(event) => void importJson(event.target.files?.[0])} type="file" /></label>
           </div>
@@ -336,6 +398,7 @@ export function WorkspaceApp() {
             onSubmit={(event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
+              setUndoProfile(structuredClone(profile));
               void run(() => owner.updateProfileTitle({ ...commandInput(workspace), title: String(data.get("title")) }), "Profile title saved as a new draft revision.");
             }}
           >
@@ -372,6 +435,7 @@ export function WorkspaceApp() {
                 event.preventDefault();
                 const form = event.currentTarget;
                 const data = new FormData(form);
+                setUndoProfile(structuredClone(profile));
                 void run(() => owner.addCustomSignal({
                   ...commandInput(workspace),
                   label: String(data.get("label")),
@@ -403,6 +467,17 @@ export function WorkspaceApp() {
           <div className="scenario-card">
             <div><span className="status-label">{scenario.synthetic ? "Synthetic low-stakes scenario" : "Self-authored low-stakes scenario"}</span><h3>{scenario.title}</h3><p>{scenario.summary}</p></div>
             <div className="scenario-actions">
+              <label>Scenario template
+                <select
+                  aria-label="Scenario template"
+                  disabled={busy || (session.state !== "ready" && session.state !== "scenario_draft")}
+                  onChange={(event) => void run(() => owner.chooseScenarioTemplate({ ...commandInput(workspace), templateId: event.target.value as "community-workshop" | "library-meetup" | "neighborhood-garden" }), "A low-stakes scenario template was loaded for visible review.")}
+                  value={scenarioTemplates.find(({ title }) => title === scenario.title)?.id ?? ""}
+                >
+                  {!scenarioTemplates.some(({ title }) => title === scenario.title) && <option value="">Current custom scenario</option>}
+                  {scenarioTemplates.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}
+                </select>
+              </label>
               {session.state === "scenario_draft" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.submitScenarioForReview(commandInput(workspace)), "Scenario is awaiting your visible approval.")} type="button">Review this scenario</button>}
               {session.state === "awaiting_owner_review" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.approveScenario(commandInput(workspace)), "Scenario approved through the visible page.")} type="button">Approve scenario</button>}
               {session.state === "ready" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.startHumanRehearsal(commandInput(workspace)), "Human-only rehearsal started.")} type="button">Start human rehearsal</button>}
@@ -428,6 +503,12 @@ export function WorkspaceApp() {
                   onClick={() => void run(() => humanPartner.offerPartnerTurn({ ...commandInput(workspace), turn: validMayaTurn }), "The validated human partner turn is visible in the room.")}
                   type="button"
                 >Offer the sample one-question turn</button>
+                {pendingSignal?.type === "signal_selected" && <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void run(() => humanPartner.offerPartnerTurn({ ...commandInput(workspace), turn: humanAcknowledgmentTurn(pendingSignal.id, pendingSignal.meaning) }), "The human practice partner acknowledged your selected signal.")}
+                  type="button"
+                >Acknowledge selected signal</button>}
                 {!canOfferTurn && <p className="disabled-reason">{session.state !== "active" ? `Unavailable while session is ${session.state.replaceAll("_", " ")}.` : "A pending signal must be acknowledged first."}</p>}
               </div>
             </div>
@@ -461,12 +542,37 @@ export function WorkspaceApp() {
                     <form onSubmit={(event) => {
                       event.preventDefault();
                       const text = String(new FormData(event.currentTarget).get("displayText"));
+                      setUndoProfile(structuredClone(profile));
                       void run(() => owner.updateRule({ ...commandInput(workspace), ruleId: rule.id, changes: { displayText: text } }), "Rule saved as a person-authored draft revision.");
                     }}>
                       <label htmlFor={`rule-${rule.id}`}>Rule wording</label>
+                      {rule.category === "channel" && <label>Allowed communication channels
+                        <select
+                          aria-label="Allowed communication channels"
+                          onChange={(event) => {
+                            const textOnly = event.target.value === "text";
+                            setUndoProfile(structuredClone(profile));
+                            void run(() => owner.updateRule({
+                              ...commandInput(workspace),
+                              ruleId: rule.id,
+                              changes: {
+                                controlledValue: event.target.value,
+                                displayText: textOnly ? "Use text-only communication." : "Use text first; speech may also be offered.",
+                              },
+                            }), textOnly ? "You changed this rehearsal to text-only communication." : "You allowed text and speech for this rehearsal.");
+                          }}
+                          value={rule.controlledValue}
+                        >
+                          <option value="text,speech">Text and speech</option>
+                          <option value="text">Text only</option>
+                        </select>
+                      </label>}
                       <textarea defaultValue={rule.displayText} id={`rule-${rule.id}`} key={`${profile.revision}-${rule.id}`} maxLength={500} name="displayText" required />
                       <div className="rule-actions">
-                        <label className="check-row"><input checked={shared} onChange={(event) => void run(() => owner.setDisclosure({ ...commandInput(workspace), fieldKind: "rule", fieldId: rule.id, agentVisible: event.target.checked }), "Agent field access updated for the next invocation.")} type="checkbox" /> Agent can access</label>
+                        <label className="check-row"><input checked={shared} onChange={(event) => {
+                          setUndoProfile(structuredClone(profile));
+                          void run(() => owner.setDisclosure({ ...commandInput(workspace), fieldKind: "rule", fieldId: rule.id, agentVisible: event.target.checked }), "Agent field access updated for the next invocation.");
+                        }} type="checkbox" /> Agent can access</label>
                         <button className="button secondary" disabled={busy} type="submit">Save rule</button>
                       </div>
                     </form>
@@ -490,7 +596,7 @@ export function WorkspaceApp() {
         </section>
 
         <section className="product-section guide-section" id="support-guide" aria-labelledby="guide-title">
-          <div className="section-heading"><div><p className="eyebrow">05 · Derived, then reviewed</p><h2 id="guide-title">Support Guide</h2></div><div className="guide-actions"><button className="button secondary" onClick={() => window.print()} type="button">Print guide</button>{guideIsDraft && <button className="button primary" disabled={busy || pendingSuggestions.length > 0} onClick={() => void run(() => owner.ratify(commandInput(workspace)), "A new owner-controlled ratified version was created.")} type="button">Ratify visible draft</button>}</div></div>
+          <div className="section-heading"><div><p className="eyebrow">05 · Derived, then reviewed</p><h2 id="guide-title">Support Guide</h2></div><div className="guide-actions"><button className="button secondary" onClick={() => window.print()} type="button">Print guide</button>{guideIsDraft && <button className="button secondary" disabled={busy} onClick={() => void run(() => ownerQueries.verifySupportGuide(), "The current guide derivation was verified.")} type="button">Verify derivation</button>}{guideIsDraft && <button className="button primary" disabled={busy || pendingSuggestions.length > 0 || !guideVerified} onClick={() => void run(() => owner.ratify(commandInput(workspace)), "A new owner-controlled ratified version was created.")} type="button">Ratify visible draft</button>}</div></div>
           <article className="support-guide" aria-label="Support guide preview">
             {guideIsDraft && <div className="draft-watermark">Draft · visible owner review required</div>}
             <h3>{profile.title}</h3>
@@ -501,7 +607,9 @@ export function WorkspaceApp() {
             <dl>{profile.signals.map((signal) => <div key={signal.id}><dt>{signal.label}</dt><dd>{signal.description} Partner action: {signal.expectedPartnerAction}</dd></div>)}</dl>
             <blockquote>Ask me directly whenever possible. This guide explains how to communicate with me. It is not consent, a capacity assessment, an advance directive, or medical authorization.</blockquote>
           </article>
+          {guideReviewIsStale && <div className="persistent-message pause-message" role="status"><strong>Review date warning.</strong> This guide has no review date within the last 180 days. Review the current wording before relying on or ratifying it.</div>}
           <div className="derivation-check"><strong>Derivation preview</strong><span>{activeRules.length} guide statements map to {activeRules.length} accepted active source rules. {guideIsDraft ? "Draft watermark required." : `Verified against ratified version ${latestVersion?.ratifiedVersion}.`}</span></div>
+          {guideIsDraft && <p className="fine-print derivation-status">{guideVerified ? `Verified for profile revision ${profile.revision}. Ratification is available after all staged items are reviewed.` : "Run Verify derivation for this profile revision before ratification."}</p>}
 
           <div className="patch-panel secondary-panel">
             <h3>Staged protocol changes</h3>

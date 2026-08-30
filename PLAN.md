@@ -26,7 +26,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M7 — Add the top-level WebMCP stable tool catalog, runtime validation, fresh-state handlers, metadata receipts, visible availability, and all eight allowed tools.
   - Dependencies: M5–M6.
   - Validation: mocked `document.modelContext`, exactly-once registration, schema bounds, every handler headless, current-state reads, forbidden-tool absence, stop/pause/stale guards.
-- [ ] M8 — Complete the deterministic Maya judge path, staged patch review, derivation-checked support guide, adherence report, eval fixtures, and complete E2E suite.
+- [x] M8 — Complete the deterministic Maya judge path, staged patch review, derivation-checked support guide, adherence report, eval fixtures, and complete E2E suite.
   - Dependencies: M6–M7.
   - Validation: the 15-step critical path runs through mocked tools; no person scores; direct owner controls work; all gates green.
 - [ ] M9 — Harden security/privacy, dependency/update automation, CSP/headers, secret and dependency scanning, release documentation, screenshots, submission copy, and demo script.

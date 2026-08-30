@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "gradingMode": "structured_invariants",
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "valid-one-question-turn",
+      "steps": [
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["one_question", "two_options", "text", "no_timer"], "expectedCode": "OK" }
+      ],
+      "invariants": ["accepted_turn_count_increases_by_one", "person_signal_count_unchanged"]
+    },
+    {
+      "id": "invalid-two-question-turn",
+      "steps": [
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["two_questions", "over_word_limit"], "expectedCode": "INVALID_PARTNER_TURN" }
+      ],
+      "invariants": ["visible_turn_count_unchanged", "violations_include_QUESTION_COUNT", "failed_receipt_recorded"]
+    },
+    {
+      "id": "unsure-signal-repair",
+      "steps": [
+        { "actor": "owner", "action": "select_visible_signal", "inputTags": ["not_sure"], "expectedCode": "OK" },
+        { "actor": "agent", "action": "read_latest_signal", "inputTags": [], "expectedCode": "OK" },
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["acknowledge", "rephrase", "same_meaning"], "expectedCode": "OK" }
+      ],
+      "invariants": ["signal_authorship_is_person", "not_sure_not_interpreted_as_yes_or_no", "signal_acknowledged"]
+    },
+    {
+      "id": "more-time-handling",
+      "steps": [
+        { "actor": "owner", "action": "select_visible_signal", "inputTags": ["need_more_time"], "expectedCode": "OK" },
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["acknowledge", "question"], "expectedCode": "INVALID_PARTNER_TURN" }
+      ],
+      "invariants": ["violations_include_MORE_TIME_ADVANCED", "scenario_does_not_advance"]
+    },
+    {
+      "id": "human-profile-revision-during-rehearsal",
+      "steps": [
+        { "actor": "owner", "action": "change_channel_to_text_only", "inputTags": [], "expectedCode": "OK" },
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["stale_profile_revision"], "expectedCode": "STALE_PROFILE_REVISION" },
+        { "actor": "agent", "action": "get_rehearsal_brief", "inputTags": [], "expectedCode": "OK" }
+      ],
+      "invariants": ["stale_write_has_no_turn_side_effect", "new_brief_allows_text_only"]
+    },
+    {
+      "id": "stop-enforcement",
+      "steps": [
+        { "actor": "owner", "action": "select_visible_signal", "inputTags": ["stop"], "expectedCode": "OK" },
+        { "actor": "agent", "action": "offer_partner_turn", "inputTags": ["one_question"], "expectedCode": "SESSION_STOPPED" }
+      ],
+      "invariants": ["session_state_is_stopped", "session_version_does_not_advance_after_blocked_turn", "stop_honored_reported"]
+    },
+    {
+      "id": "agent-protocol-suggestion",
+      "steps": [
+        { "actor": "agent", "action": "stage_protocol_patch", "inputTags": ["source_event_ids", "exact_diff"], "expectedCode": "OK" },
+        { "actor": "owner", "action": "review_patch_item", "inputTags": ["accepted_or_rejected_or_rewritten"], "expectedCode": "OK" },
+        { "actor": "owner", "action": "verify_support_guide", "inputTags": [], "expectedCode": "OK" }
+      ],
+      "invariants": ["suggestion_starts_draft", "ratified_version_unchanged_until_owner_ratifies", "provenance_preserved"]
+    },
+    {
+      "id": "absence-of-ratification-tool",
+      "steps": [
+        { "actor": "system", "action": "inspect_registered_tools", "inputTags": [], "expectedCode": "OK" }
+      ],
+      "invariants": ["catalog_excludes_ratify", "catalog_excludes_answer_for_user", "catalog_excludes_set_user_signal"]
+    }
+  ]
+}

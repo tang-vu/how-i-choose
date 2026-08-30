@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { hashProfile, ratifyProfile } from "@/domain/canonicalize";
-import type { CommunicationRule } from "@/domain/profile";
+import { CommunicationProfileSchema, type CommunicationRule } from "@/domain/profile";
 import type { RehearsalState } from "@/domain/rehearsal";
 import { StableIdSchema } from "@/domain/schema";
 import { transitionRehearsal } from "@/machine/rehearsal-machine";
@@ -13,6 +13,7 @@ import {
 } from "@/application/command-bus";
 import { mayaProfile, mayaScenario, mayaSession } from "@/fixtures/maya";
 import { blankProfile, blankScenario, blankSession } from "@/fixtures/blank";
+import { scenarioTemplates } from "@/fixtures/scenarios";
 
 const ExpectedVersionsSchema = z.object({
   expectedProfileRevision: z.number().int().nonnegative(),
@@ -60,6 +61,14 @@ const ReviewSuggestionCommandSchema = ExpectedVersionsSchema.extend({
     context.addIssue({ code: "custom", path: ["rewrittenDisplayText"], message: "Rewriting requires visible owner-authored wording." });
   }
 });
+
+const RestoreDraftCommandSchema = ExpectedVersionsSchema.extend({
+  previousProfile: CommunicationProfileSchema,
+}).strict();
+
+const ChooseScenarioTemplateCommandSchema = ExpectedVersionsSchema.extend({
+  templateId: z.enum(["community-workshop", "library-meetup", "neighborhood-garden"]),
+}).strict();
 
 export type WorkspaceIds = {
   profileId: string;
@@ -122,6 +131,68 @@ export class OwnerWorkflowService {
       ...profile,
       title: command.title,
     }), { profileId: this.ids.profileId });
+  }
+
+  async restorePreviousDraft(unchecked: z.input<typeof RestoreDraftCommandSchema>): Promise<CommandResult<{ profileId: string }>> {
+    const command = RestoreDraftCommandSchema.parse(unchecked);
+    if (command.previousProfile.id !== this.ids.profileId) throw new Error("PROFILE_ID_MISMATCH");
+    return this.mutateProfile("owner_restore_previous_draft", command, (profile) => ({
+      ...command.previousProfile,
+      revision: profile.revision,
+      ratifiedVersion: profile.ratifiedVersion,
+      reviewedAt: profile.reviewedAt,
+      createdAt: profile.createdAt,
+    }), { profileId: this.ids.profileId });
+  }
+
+  async chooseScenarioTemplate(
+    unchecked: z.input<typeof ChooseScenarioTemplateCommandSchema>,
+  ): Promise<CommandResult<{ templateId: string; state: string }>> {
+    const command = ChooseScenarioTemplateCommandSchema.parse(unchecked);
+    const request = await prepareAtomicRequest({
+      scope: "owner_choose_scenario_template",
+      idempotencyKey: command.idempotencyKey,
+      ...this.ids,
+      expectedProfileRevision: command.expectedProfileRevision,
+      expectedSessionVersion: command.expectedSessionVersion,
+      source: "owner_ui",
+      toolName: "owner_choose_scenario_template",
+    }, command, this.dependencies);
+    return this.repository.runAtomicCommand<{ templateId: string; state: string }>(request, ({ scenario, session }) => {
+      const transition = transitionRehearsal(session.state, "owner_choose_scenario_template");
+      if (!transition.ok) {
+        return {
+          accepted: false,
+          code: "TOOL_NOT_AVAILABLE_IN_STATE",
+          violations: [{ code: transition.code, message: "Choose a scenario template before the rehearsal starts." }],
+          nextActions: [],
+        };
+      }
+      const template = scenarioTemplates.find(({ id }) => id === command.templateId)!;
+      const now = this.dependencies.now();
+      const eventId = this.dependencies.id("event");
+      return {
+        accepted: true,
+        scenario: { ...scenario, title: template.title, summary: template.summary, status: "draft", approvedAt: undefined, synthetic: true },
+        session: {
+          ...session,
+          state: transition.state,
+          sessionVersion: session.sessionVersion + 1,
+          events: transition.state === session.state ? session.events : [...session.events, {
+            id: eventId,
+            sequence: session.events.length,
+            at: now,
+            actor: "owner",
+            type: "state_changed",
+            from: session.state,
+            to: transition.state,
+          }],
+        },
+        data: { templateId: template.id, state: transition.state },
+        changedIds: [scenario.id, session.id, ...(transition.state === session.state ? [] : [eventId])],
+        nextActions: ["review_scenario_in_visible_ui"],
+      };
+    });
   }
 
   async setDisclosure(unchecked: z.input<typeof SetDisclosureCommandSchema>): Promise<CommandResult<{ fieldId: string; agentVisible: boolean }>> {
@@ -589,6 +660,10 @@ export class OwnerWorkflowService {
     const command = ExpectedVersionsSchema.parse(unchecked);
     const current = await this.repository.readWorkspace(this.ids.profileId, this.ids.sessionId, this.ids.scenarioId);
     if (!current) throw new Error("WORKSPACE_NOT_FOUND");
+    const receipts = await this.repository.listReceipts();
+    const guideVerified = receipts.some(
+      (receipt) => receipt.toolName === "verify_support_guide" && receipt.code === "OK" && receipt.profileRevision === current.profile.revision,
+    );
     const now = this.dependencies.now();
     const ratified = await ratifyProfile(current.profile, now);
     const request = await prepareAtomicRequest({
@@ -601,6 +676,14 @@ export class OwnerWorkflowService {
       toolName: "owner_ratify_profile",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ ratifiedVersion: number; hash: string }>(request, ({ profile, session }) => {
+      if (!guideVerified) {
+        return {
+          accepted: false,
+          code: "OWNER_REVIEW_REQUIRED",
+          nextActions: ["verify_support_guide"],
+          violations: [{ code: "SUPPORT_GUIDE_NOT_VERIFIED", message: "Verify the current support-guide derivation before visible ratification." }],
+        };
+      }
       const unreviewed = profile.rules.filter(
         (rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.reviewedAt && !rule.provenance.acceptedAt,
       );

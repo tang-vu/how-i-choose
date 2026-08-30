@@ -134,20 +134,28 @@ describe("imperative WebMCP contracts and handlers", () => {
     const stale = await handlers.execute("offer_partner_turn", offerInput(0, 1, "stale-turn"));
     expect(stale).toEqual(expect.objectContaining({ ok: false, code: "STALE_PROFILE_REVISION", nextActions: ["get_rehearsal_brief"] }));
 
-    const invalid = offerInput(1, 1, "invalid-two-questions");
+    await handlers.execute("start_approved_rehearsal", {
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 1,
+      scenarioId: ids.scenarioId,
+      idempotencyKey: "start-before-repair",
+    });
+
+    const invalid = offerInput(1, 2, "invalid-two-questions");
     invalid.segments.push({ kind: "question", text: "Which reminder should I add?" });
     const rejected = await handlers.execute("offer_partner_turn", invalid);
-    expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 2 }));
+    expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 3 }));
     expect(JSON.stringify(rejected)).toContain("QUESTION_COUNT");
 
-    const repaired = await handlers.execute("offer_partner_turn", offerInput(1, 2, "repaired-turn"));
-    expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 3, data: expect.objectContaining({ visible: true }) }));
+    const repaired = await handlers.execute("offer_partner_turn", offerInput(1, 3, "repaired-turn"));
+    expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 4, data: expect.objectContaining({ visible: true }) }));
     const report = await handlers.execute("get_rehearsal_report", {});
     expect(JSON.stringify(report)).toContain("violation_repaired");
   });
 
   it("returns only the exact shared person-authored signal and enforces Stop", async () => {
-    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "amber", signalId: "signal-amber" });
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-amber" });
+    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "amber", signalId: "signal-amber" });
     const signal = await handlers.execute("read_latest_signal", {});
     expect(signal).toEqual(expect.objectContaining({
       ok: true,
@@ -155,15 +163,15 @@ describe("imperative WebMCP contracts and handlers", () => {
     }));
 
     await owner.resetSyntheticDemo();
-    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "red-stop", signalId: "signal-red" });
-    const stopped = await handlers.execute("offer_partner_turn", offerInput(1, 2, "after-stop"));
-    expect(stopped).toEqual(expect.objectContaining({ ok: false, code: "SESSION_STOPPED", sessionVersion: 2 }));
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-stop" });
+    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "red-stop", signalId: "signal-red" });
+    const stopped = await handlers.execute("offer_partner_turn", offerInput(1, 3, "after-stop"));
+    expect(stopped).toEqual(expect.objectContaining({ ok: false, code: "SESSION_STOPPED", sessionVersion: 3 }));
     const workspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
     expect(workspace?.session.events.some(({ type }) => type === "partner_turn_accepted")).toBe(false);
   });
 
   it("starts only an approved ready session and stages provenance without ratification", async () => {
-    await db.sessions.update(ids.sessionId, { state: "ready" });
     const started = await handlers.execute("start_approved_rehearsal", {
       expectedProfileRevision: 1,
       expectedSessionVersion: 1,
@@ -220,7 +228,8 @@ describe("imperative WebMCP contracts and handlers", () => {
   it("records metadata-only receipts for reads, invalid input, and mutations", async () => {
     await handlers.execute("get_rehearsal_brief", {});
     await handlers.execute("offer_partner_turn", { extra: "private prose must not persist" });
-    await handlers.execute("offer_partner_turn", offerInput(1, 1));
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-receipt" });
+    await handlers.execute("offer_partner_turn", offerInput(1, 2));
     const receipts = await repository.listReceipts();
     expect(receipts.map(({ toolName }) => toolName)).toEqual(expect.arrayContaining(["get_rehearsal_brief", "offer_partner_turn"]));
     expect(JSON.stringify(receipts)).not.toContain("private prose");

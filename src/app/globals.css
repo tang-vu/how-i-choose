@@ -429,7 +429,8 @@ summary { min-height: 44px; display: flex; align-items: center; font-weight: 800
 .scenario-card { display: flex; justify-content: space-between; gap: 24px; padding: 24px; border: 1px solid var(--line); border-left: 6px solid var(--amber); border-radius: 10px; background: var(--surface); }
 .scenario-card h3 { font-family: Georgia, "Times New Roman", serif; font-size: 1.5rem; }
 .status-label { color: var(--indigo); font-size: .72rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
-.scenario-actions { flex: 0 0 auto; align-self: center; }
+.scenario-actions { flex: 0 0 min(340px, 100%); align-self: center; display: grid; gap: 10px; }
+.scenario-actions label { display: grid; gap: 6px; font-weight: 750; }
 .practice-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 22px; }
 .practice-grid > div, .agent-mode-panel { padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .empty-state { padding: 18px; border: 1px dashed #757b86; border-radius: 8px; color: var(--ink-soft); }
@@ -471,6 +472,7 @@ summary { min-height: 44px; display: flex; align-items: center; font-weight: 800
 .support-guide blockquote { margin: 32px 0 0; padding: 20px; border: 2px solid #111; font-weight: 800; }
 .draft-watermark { position: absolute; top: 18px; right: 18px; padding: 7px 9px; border: 1px solid #744a00; background: #fff2c8; color: #5a3b00; font-size: .72rem; font-weight: 850; text-transform: uppercase; }
 .derivation-check { max-width: 900px; display: grid; gap: 5px; margin: 14px auto 0; padding: 14px 18px; border: 1px solid var(--line); background: #edf6f1; }
+.derivation-status { max-width: 900px; margin: 8px auto 0; }
 .patch-panel, .activity-panel { margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 10px; }
 .patch-panel li { display: grid; gap: 8px; }
 .patch-panel li div { display: flex; gap: 8px; }
