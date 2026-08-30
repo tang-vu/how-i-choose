@@ -8,7 +8,7 @@ import { AgentRehearsalService } from "@/application/agent-rehearsal-service";
 import { browserCommandDependencies } from "@/application/command-bus";
 import { OwnerWorkflowService, type WorkspaceIds } from "@/application/owner-workflow-service";
 import { BrandMark } from "@/components/brand-mark";
-import { SiteToolsStatus } from "@/components/site-tools-status";
+import { WebMcpBridge, workspaceChangedEvent } from "@/components/webmcp-bridge";
 import { findActiveRuleConflicts } from "@/domain/conflict-engine";
 import { activeRulesForContext, isFieldDisclosed } from "@/domain/profile";
 import { buildAgentProfileProjection } from "@/domain/provenance";
@@ -72,6 +72,7 @@ export function WorkspaceApp() {
   const [plainLanguage, setPlainLanguage] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [textScale, setTextScale] = useState<1 | 1.15 | 1.3>(1);
+  const [patchDrafts, setPatchDrafts] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     await appStore.getState().refresh(repository, workspaceIds);
@@ -95,6 +96,14 @@ export function WorkspaceApp() {
     };
     void initialize();
   }, [owner, refresh, repository]);
+
+  useEffect(() => {
+    const handleWorkspaceChange = () => {
+      void refresh().then(() => setNotice("A Site tool finished. The local workspace is up to date."));
+    };
+    window.addEventListener(workspaceChangedEvent, handleWorkspaceChange);
+    return () => window.removeEventListener(workspaceChangedEvent, handleWorkspaceChange);
+  }, [refresh]);
 
   const run = useCallback(async (
     action: () => Promise<{ ok: boolean; code: string } | void>,
@@ -145,6 +154,12 @@ export function WorkspaceApp() {
     : undefined;
   const acceptedTurns = session.events.filter((event) => event.type === "partner_turn_accepted");
   const canOfferTurn = session.state === "active" && !pendingSignal;
+  const pendingSuggestions = profile.rules.filter(
+    (rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.reviewedAt,
+  );
+  const profileRules = profile.rules.filter(
+    (rule) => !(rule.provenance.source === "agent_suggestion" && !rule.provenance.reviewedAt),
+  );
 
   const resetSample = () => run(async () => {
     await owner.resetSyntheticDemo();
@@ -157,6 +172,21 @@ export function WorkspaceApp() {
     run(
       () => owner.selectSignal({ ...commandInput(workspace), signalId }),
       "Your signal was recorded exactly as selected.",
+    );
+
+  const reviewSuggestion = (ruleId: string, outcome: "accepted" | "rejected" | "rewritten", fallbackText: string) =>
+    run(
+      () => owner.reviewAgentSuggestion({
+        ...commandInput(workspace),
+        ruleId,
+        outcome,
+        ...(outcome === "rewritten" ? { rewrittenDisplayText: patchDrafts[ruleId] ?? fallbackText } : {}),
+      }),
+      outcome === "accepted"
+        ? "You accepted this suggestion through visible review."
+        : outcome === "rejected"
+          ? "You rejected this suggestion; it will not affect the protocol."
+          : "Your rewritten wording is now person-authored.",
     );
 
   const exportJson = async () => {
@@ -200,7 +230,7 @@ export function WorkspaceApp() {
         </Link>
         <div className="header-tools">
           <span className="alpha-badge">Open alpha</span>
-          <SiteToolsStatus />
+          <WebMcpBridge />
         </div>
       </header>
 
@@ -403,6 +433,12 @@ export function WorkspaceApp() {
             </div>
           ) : (
             <div className="agent-mode-panel">
+              <div>
+                <h3>Partner turns</h3>
+                {acceptedTurns.length === 0 ? <p className="empty-state">No partner turn yet. The page will never auto-advance.</p> : (
+                  <ol className="turn-list">{acceptedTurns.map((event) => <li key={event.id}>{event.turn.segments.map(({ text }) => text).join(" ")}<small>Accepted under profile revision {session.profileRevision}</small></li>)}</ol>
+                )}
+              </div>
               <div><h3>Work beside ChatGPT through Site tools</h3><p>The agent can read only shared fields, offer validated turns, and stage suggestions. It cannot select your signal, resume, ratify, publish, share, or export.</p></div>
               <textarea aria-label="ChatGPT starter prompt" readOnly rows={7} value={starterPrompt} />
               <button className="button primary" onClick={() => void copyPrompt()} type="button">Copy ChatGPT starter prompt</button>
@@ -410,14 +446,14 @@ export function WorkspaceApp() {
           )}
 
           {session.state === "paused" && <div className="persistent-message pause-message" role="status"><strong>Paused.</strong> No new partner turn can appear. Only you can resume through the visible button above.</div>}
-          {session.state === "stopped" && <div className="persistent-message stop-message" role="alert"><strong>Stopped.</strong> This rehearsal is terminal. Further partner turns are blocked.</div>}
+          {session.state === "stopped" && <div className="persistent-message stop-message" role="alert"><strong>Stopped.</strong> This rehearsal is terminal. Further partner turns are blocked. <button className="button secondary" disabled={busy} onClick={() => void run(() => owner.openDebrief(commandInput(workspace)), "You opened debrief for the stopped rehearsal.")} type="button">Open debrief</button></div>}
         </section>
 
         <section className="product-section" id="what-helps" aria-labelledby="helps-title">
           <div className="section-heading"><div><p className="eyebrow">03 · Controlled rules</p><h2 id="helps-title">What Helps</h2></div><p>Draft and retired rules do not affect rehearsal evaluation.</p></div>
-          {profile.rules.length === 0 ? <p className="empty-state">No communication rules yet. Start with channel, one-question, pacing, processing time, language, or signal handling.</p> : (
+          {profileRules.length === 0 ? <p className="empty-state">No communication rules yet. Start with channel, one-question, pacing, processing time, language, or signal handling.</p> : (
             <div className="rule-list">
-              {profile.rules.map((rule) => {
+              {profileRules.map((rule) => {
                 const shared = rule.agentVisible && isFieldDisclosed(profile, "rule", rule.id);
                 return (
                   <article className="rule-card" key={rule.id}>
@@ -454,7 +490,7 @@ export function WorkspaceApp() {
         </section>
 
         <section className="product-section guide-section" id="support-guide" aria-labelledby="guide-title">
-          <div className="section-heading"><div><p className="eyebrow">05 · Derived, then reviewed</p><h2 id="guide-title">Support Guide</h2></div><div className="guide-actions"><button className="button secondary" onClick={() => window.print()} type="button">Print guide</button>{guideIsDraft && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.ratify(commandInput(workspace)), "A new owner-controlled ratified version was created.")} type="button">Ratify visible draft</button>}</div></div>
+          <div className="section-heading"><div><p className="eyebrow">05 · Derived, then reviewed</p><h2 id="guide-title">Support Guide</h2></div><div className="guide-actions"><button className="button secondary" onClick={() => window.print()} type="button">Print guide</button>{guideIsDraft && <button className="button primary" disabled={busy || pendingSuggestions.length > 0} onClick={() => void run(() => owner.ratify(commandInput(workspace)), "A new owner-controlled ratified version was created.")} type="button">Ratify visible draft</button>}</div></div>
           <article className="support-guide" aria-label="Support guide preview">
             {guideIsDraft && <div className="draft-watermark">Draft · visible owner review required</div>}
             <h3>{profile.title}</h3>
@@ -469,9 +505,31 @@ export function WorkspaceApp() {
 
           <div className="patch-panel secondary-panel">
             <h3>Staged protocol changes</h3>
-            {profile.rules.filter((rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.acceptedAt).length === 0 ? <p className="empty-state">No staged agent suggestions. If an agent proposes one after rehearsal, its exact before-and-after diff and provenance will appear here for per-item review.</p> : (
-              <ul>{profile.rules.filter((rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.acceptedAt).map((rule) => <li key={rule.id}><strong>Proposed:</strong> {rule.displayText}<span>Source session: {rule.provenance.sourceSessionId}</span><div><button type="button">Accept</button><button type="button">Reject</button><button type="button">Rewrite</button></div></li>)}</ul>
+            {pendingSuggestions.length === 0 ? <p className="empty-state">No staged agent suggestions. If an agent proposes one after rehearsal, its exact before-and-after diff and provenance will appear here for per-item review.</p> : (
+              <ul className="patch-list">{pendingSuggestions.map((rule) => {
+                const target = rule.provenance.targetRuleId ? profile.rules.find(({ id }) => id === rule.provenance.targetRuleId) : undefined;
+                return <li key={rule.id}>
+                  <div className="patch-diff" aria-label={`Exact diff for ${rule.id}`}>
+                    <div><strong>Before</strong><p>{target?.displayText ?? "No existing rule — this is an addition."}</p></div>
+                    <div><strong>After (agent draft)</strong><p>{rule.displayText}</p></div>
+                  </div>
+                  <p className="fine-print">Patch {rule.provenance.sourcePatchId} · session {rule.provenance.sourceSessionId} · evidence {rule.provenance.sourceEventIds?.join(", ")}</p>
+                  <label htmlFor={`rewrite-${rule.id}`}>Your wording if you choose Rewrite</label>
+                  <textarea
+                    id={`rewrite-${rule.id}`}
+                    maxLength={500}
+                    onChange={(event) => setPatchDrafts((current) => ({ ...current, [rule.id]: event.target.value }))}
+                    value={patchDrafts[rule.id] ?? rule.displayText}
+                  />
+                  <div className="patch-actions">
+                    <button className="button primary" disabled={busy} onClick={() => void reviewSuggestion(rule.id, "accepted", rule.displayText)} type="button">Accept</button>
+                    <button className="button secondary" disabled={busy} onClick={() => void reviewSuggestion(rule.id, "rejected", rule.displayText)} type="button">Reject</button>
+                    <button className="button secondary" disabled={busy} onClick={() => void reviewSuggestion(rule.id, "rewritten", rule.displayText)} type="button">Rewrite as mine</button>
+                  </div>
+                </li>;
+              })}</ul>
             )}
+            {pendingSuggestions.length > 0 && <p className="disabled-reason">Ratification stays unavailable until you accept, reject, or rewrite every item.</p>}
           </div>
         </section>
 

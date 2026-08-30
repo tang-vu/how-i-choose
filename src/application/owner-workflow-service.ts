@@ -51,6 +51,16 @@ const UpdateTitleCommandSchema = ExpectedVersionsSchema.extend({
   title: z.string().trim().min(1).max(120),
 }).strict();
 
+const ReviewSuggestionCommandSchema = ExpectedVersionsSchema.extend({
+  ruleId: StableIdSchema,
+  outcome: z.enum(["accepted", "rejected", "rewritten"]),
+  rewrittenDisplayText: z.string().trim().min(1).max(500).optional(),
+}).strict().superRefine((command, context) => {
+  if (command.outcome === "rewritten" && !command.rewrittenDisplayText) {
+    context.addIssue({ code: "custom", path: ["rewrittenDisplayText"], message: "Rewriting requires visible owner-authored wording." });
+  }
+});
+
 export type WorkspaceIds = {
   profileId: string;
   sessionId: string;
@@ -330,6 +340,10 @@ export class OwnerWorkflowService {
     return this.changeSessionState("owner_resume", "owner_resume", input);
   }
 
+  async openDebrief(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
+    return this.changeSessionState("owner_open_debrief", "owner_open_debrief", input);
+  }
+
   async submitScenarioForReview(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
     return this.reviewScenario("owner_submit_scenario", "submit_scenario", input);
   }
@@ -400,7 +414,7 @@ export class OwnerWorkflowService {
 
   private async changeSessionState(
     scope: string,
-    action: "owner_resume" | "start_approved_rehearsal",
+    action: "owner_resume" | "start_approved_rehearsal" | "owner_open_debrief",
     unchecked: z.input<typeof ExpectedVersionsSchema>,
   ): Promise<CommandResult<{ state: string }>> {
     const command = ExpectedVersionsSchema.parse(unchecked);
@@ -457,6 +471,120 @@ export class OwnerWorkflowService {
     });
   }
 
+  async reviewAgentSuggestion(
+    unchecked: z.input<typeof ReviewSuggestionCommandSchema>,
+  ): Promise<CommandResult<{ ruleId: string; outcome: "accepted" | "rejected" | "rewritten"; state: string }>> {
+    const command = ReviewSuggestionCommandSchema.parse(unchecked);
+    const request = await prepareAtomicRequest({
+      scope: "owner_review_agent_suggestion",
+      idempotencyKey: command.idempotencyKey,
+      ...this.ids,
+      expectedProfileRevision: command.expectedProfileRevision,
+      expectedSessionVersion: command.expectedSessionVersion,
+      source: "owner_ui",
+      toolName: "owner_review_agent_suggestion",
+    }, command, this.dependencies);
+    return this.repository.runAtomicCommand<{ ruleId: string; outcome: "accepted" | "rejected" | "rewritten"; state: string }>(request, ({ profile, session }) => {
+      const index = profile.rules.findIndex(({ id }) => id === command.ruleId);
+      const suggestion = profile.rules[index];
+      if (!suggestion || suggestion.provenance.source !== "agent_suggestion" || suggestion.provenance.reviewedAt) {
+        return {
+          accepted: false,
+          code: "TOOL_NOT_AVAILABLE_IN_STATE",
+          violations: [{ code: "SUGGESTION_NOT_PENDING", message: "That suggestion is not awaiting visible owner review." }],
+          nextActions: ["review_staged_patch"],
+        };
+      }
+      if (session.state !== "protocol_patch_staged" && session.state !== "owner_review") {
+        return {
+          accepted: false,
+          code: "TOOL_NOT_AVAILABLE_IN_STATE",
+          violations: [{ code: "OWNER_REVIEW_NOT_OPEN", message: "The staged patch is not in owner review." }],
+          nextActions: [],
+        };
+      }
+      const now = this.dependencies.now();
+      const rules = [...profile.rules];
+      const targetIndex = suggestion.provenance.targetRuleId
+        ? rules.findIndex(({ id }) => id === suggestion.provenance.targetRuleId)
+        : -1;
+      if (command.outcome !== "rejected" && targetIndex >= 0) {
+        rules[targetIndex] = { ...rules[targetIndex]!, status: "retired" };
+      }
+      rules[index] = command.outcome === "rejected"
+        ? {
+            ...suggestion,
+            status: "retired",
+            provenance: { ...suggestion.provenance, reviewedAt: now, reviewOutcome: "rejected" },
+          }
+        : command.outcome === "rewritten"
+          ? {
+              ...suggestion,
+              status: "active",
+              displayText: command.rewrittenDisplayText!,
+              provenance: {
+                ...suggestion.provenance,
+                source: "person",
+                acceptedAt: now,
+                reviewedAt: now,
+                reviewOutcome: "rewritten",
+              },
+            }
+          : {
+              ...suggestion,
+              status: "active",
+              provenance: {
+                ...suggestion.provenance,
+                acceptedAt: now,
+                reviewedAt: now,
+                reviewOutcome: "accepted",
+              },
+            };
+      const remaining = rules.filter((rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.reviewedAt).length;
+      let nextState: RehearsalState = session.state;
+      if (nextState === "protocol_patch_staged") {
+        const reviewTransition = transitionRehearsal(nextState, "request_owner_patch_review");
+        if (!reviewTransition.ok) throw new Error("INVALID_REHEARSAL_STATE");
+        nextState = reviewTransition.state;
+      }
+      if (remaining === 0) {
+        const completion = transitionRehearsal(nextState, "owner_complete");
+        if (!completion.ok) throw new Error("INVALID_REHEARSAL_STATE");
+        nextState = completion.state;
+      }
+      const patchId = suggestion.provenance.sourcePatchId ?? suggestion.id;
+      const eventId = this.dependencies.id("event");
+      const nextProfile = {
+        ...profile,
+        revision: profile.revision + 1,
+        updatedAt: now,
+        rules,
+      };
+      return {
+        accepted: true,
+        profile: nextProfile,
+        session: {
+          ...session,
+          profileRevision: nextProfile.revision,
+          sessionVersion: session.sessionVersion + 1,
+          state: nextState,
+          events: [...session.events, {
+            id: eventId,
+            sequence: session.events.length,
+            at: now,
+            actor: "owner",
+            type: "patch_reviewed",
+            patchId,
+            outcome: command.outcome,
+          }],
+        },
+        data: { ruleId: suggestion.id, outcome: command.outcome, state: nextState },
+        changedIds: [profile.id, session.id, suggestion.id, ...(targetIndex >= 0 ? [rules[targetIndex]!.id] : []), eventId],
+        nextActions: remaining > 0 ? ["review_next_patch_item"] : ["verify_support_guide", "ratify_in_visible_ui"],
+      };
+    });
+  }
+
   async ratify(unchecked: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ ratifiedVersion: number; hash: string }>> {
     const command = ExpectedVersionsSchema.parse(unchecked);
     const current = await this.repository.readWorkspace(this.ids.profileId, this.ids.sessionId, this.ids.scenarioId);
@@ -474,7 +602,7 @@ export class OwnerWorkflowService {
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ ratifiedVersion: number; hash: string }>(request, ({ profile, session }) => {
       const unreviewed = profile.rules.filter(
-        (rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.acceptedAt,
+        (rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.reviewedAt && !rule.provenance.acceptedAt,
       );
       if (unreviewed.length > 0) {
         return {

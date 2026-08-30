@@ -29,7 +29,12 @@ export const RuleStrengthSchema = z.enum(["must", "should", "may"]);
 export const RuleProvenanceSchema = z.object({
   source: z.enum(["person", "agent_suggestion", "template"]),
   sourceSessionId: StableIdSchema.optional(),
+  sourcePatchId: StableIdSchema.optional(),
+  sourceEventIds: z.array(StableIdSchema).max(50).optional(),
+  targetRuleId: StableIdSchema.optional(),
   acceptedAt: IsoDateSchema.optional(),
+  reviewedAt: IsoDateSchema.optional(),
+  reviewOutcome: z.enum(["accepted", "rejected", "rewritten"]).optional(),
 }).strict();
 
 export const CommunicationRuleSchema = z.object({

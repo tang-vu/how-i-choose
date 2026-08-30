@@ -122,6 +122,8 @@ export const validMayaTurn: StructuredPartnerTurn = {
 };
 
 export const allRequiredSignalMeanings = [
+  "yes",
+  "no",
   "not_sure",
   "need_information",
   "need_more_time",

@@ -180,7 +180,7 @@ describe("atomic application services", () => {
     }));
   });
 
-  it("rejects invalid partner turns without adding a visible turn event", async () => {
+  it("rejects invalid partner turns while recording non-visible adherence evidence", async () => {
     const invalid = structuredClone(validMayaTurn);
     invalid.segments.push({ kind: "question", text: "Which reminder should I add?" });
     const result = await agent.offerPartnerTurn({
@@ -194,7 +194,11 @@ describe("atomic application services", () => {
 
     expect(result.code).toBe("INVALID_PARTNER_TURN");
     expect(result.violations).toEqual(expect.arrayContaining([expect.objectContaining({ code: "QUESTION_COUNT" })]));
-    expect(workspace?.session.events).toEqual([]);
+    expect(workspace?.session.events).toEqual([
+      expect.objectContaining({ type: "partner_turn_rejected", violationCodes: expect.arrayContaining(["QUESTION_COUNT"]) }),
+    ]);
+    expect(workspace?.session.events.some(({ type }) => type === "partner_turn_accepted")).toBe(false);
+    expect(workspace?.session.sessionVersion).toBe(2);
     expect(receipts[0]).toEqual(expect.objectContaining({ toolName: "offer_partner_turn", code: "INVALID_PARTNER_TURN" }));
   });
 

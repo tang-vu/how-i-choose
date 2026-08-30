@@ -123,6 +123,17 @@ export class AgentRehearsalService {
           previousAccepted?.type === "partner_turn_accepted" ? previousAccepted.turn : undefined,
       });
       if (!validation.valid) {
+        const recordViolation = session.state === "active";
+        const eventId = recordViolation ? this.dependencies.id("event") : null;
+        const rejectedEvent: RehearsalEvent | null = eventId ? {
+          id: eventId,
+          sequence: session.events.length,
+          at: this.dependencies.now(),
+          actor: "agent",
+          type: "partner_turn_rejected",
+          violationCodes: validation.violations.map(({ code }) => code),
+          ruleIds: validation.violations.flatMap(({ ruleIds }) => ruleIds).filter((id, index, all) => all.indexOf(id) === index),
+        } : null;
         return {
           accepted: false,
           code:
@@ -134,6 +145,14 @@ export class AgentRehearsalService {
                   ? "PENDING_SIGNAL_UNACKNOWLEDGED"
                   : "INVALID_PARTNER_TURN",
           nextActions: session.state === "active" ? ["repair_partner_turn"] : [],
+          ...(rejectedEvent ? {
+            session: {
+              ...session,
+              sessionVersion: session.sessionVersion + 1,
+              events: [...session.events, rejectedEvent],
+            },
+            changedIds: [session.id, rejectedEvent.id],
+          } : {}),
           violations: validation.violations.map(({ code, ruleIds, message, repair }) => ({
             code,
             ruleIds,

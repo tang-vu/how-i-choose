@@ -23,7 +23,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M6 — Build the accessible standalone product: onboarding, My Signals, custom signals, What Helps, Practice Room, Audit, Support Guide, History, Privacy, human mode, responsive preferences, print, and demo reset.
   - Dependencies: M5.
   - Validation: keyboard flows, narrow/wide viewports, forced colors, reduced motion, persistent Pause/Stop, axe major states, production build.
-- [ ] M7 — Add the top-level WebMCP stable tool catalog, runtime validation, fresh-state handlers, metadata receipts, visible availability, and all seven allowed tools.
+- [x] M7 — Add the top-level WebMCP stable tool catalog, runtime validation, fresh-state handlers, metadata receipts, visible availability, and all eight allowed tools.
   - Dependencies: M5–M6.
   - Validation: mocked `document.modelContext`, exactly-once registration, schema bounds, every handler headless, current-state reads, forbidden-tool absence, stop/pause/stale guards.
 - [ ] M8 — Complete the deterministic Maya judge path, staged patch review, derivation-checked support guide, adherence report, eval fixtures, and complete E2E suite.
@@ -56,4 +56,4 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 
 ## Dependencies and cut lines
 
-The judged core is the deterministic human workflow plus the seven scoped WebMCP tools, accessibility, privacy, tests, deployment, and submission materials. If schedule pressure appears, first cut decorative illustration, optional Radix dependencies, nonessential charts, and any stretch enhancement. Do not cut human-only practice, owner-controlled signals/pause/stop/ratification, revision and idempotency guards, private projections, support-guide disclaimer, core accessibility, contract tests, production deployment, or honest ChatGPT verification status. Accounts, sync, collaboration, health integrations, speech/audio, emotion detection, crisis features, payments, organization features, i18n, encrypted vault, PWA, embedded models, and general chat are out of scope.
+The judged core is the deterministic human workflow plus the eight scoped WebMCP tools, accessibility, privacy, tests, deployment, and submission materials. If schedule pressure appears, first cut decorative illustration, optional Radix dependencies, nonessential charts, and any stretch enhancement. Do not cut human-only practice, owner-controlled signals/pause/stop/ratification, revision and idempotency guards, private projections, support-guide disclaimer, core accessibility, contract tests, production deployment, or honest ChatGPT verification status. Accounts, sync, collaboration, health integrations, speech/audio, emotion detection, crisis features, payments, organization features, i18n, encrypted vault, PWA, embedded models, and general chat are out of scope.

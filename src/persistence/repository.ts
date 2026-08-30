@@ -71,6 +71,7 @@ export type AcceptedMutation<T> = {
 export type RejectedMutation = {
   accepted: false;
   code: string;
+  session?: RehearsalSession;
   data?: never;
   changedIds?: string[];
   nextActions: string[];
@@ -309,7 +310,7 @@ export class WorkspaceRepository {
         const snapshot = { profile, session, scenario };
         const outcome = await mutate(snapshot);
         const nextProfile = outcome.accepted && outcome.profile ? CommunicationProfileSchema.parse(outcome.profile) : profile;
-        const nextSession = outcome.accepted && outcome.session ? RehearsalSessionSchema.parse(outcome.session) : session;
+        const nextSession = outcome.session ? RehearsalSessionSchema.parse(outcome.session) : session;
         const nextScenario = outcome.accepted && outcome.scenario ? ScenarioSchema.parse(outcome.scenario) : scenario;
         const changedIds = outcome.changedIds ?? [];
         const result: CommandResult<T> = {
@@ -328,10 +329,10 @@ export class WorkspaceRepository {
 
         if (outcome.accepted) {
           if (outcome.profile) await this.db.profiles.put(nextProfile);
-          if (outcome.session) await this.db.sessions.put(nextSession);
           if (outcome.scenario) await this.db.scenarios.put(nextScenario);
           if (outcome.profileVersion) await this.db.profileVersions.add(outcome.profileVersion);
         }
+        if (outcome.session) await this.db.sessions.put(nextSession);
         const idempotency: IdempotencyRecord = {
           id: idempotencyId,
           scope: request.scope,
@@ -347,5 +348,9 @@ export class WorkspaceRepository {
         return result;
       },
     );
+  }
+
+  async recordActivityReceipt(input: ActivityReceipt): Promise<void> {
+    await this.db.activityReceipts.add(input);
   }
 }

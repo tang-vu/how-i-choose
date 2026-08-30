@@ -1,6 +1,6 @@
 # Architecture and product decisions
 
-Updated: 2026-08-30 (Asia/Saigon)
+Updated: 2026-08-31 (Asia/Saigon)
 
 ## D-001 — Preserve the existing public history
 
@@ -12,7 +12,7 @@ Use pnpm, strict TypeScript, React, and Next.js App Router with static export. T
 
 ## D-003 — Stable WebMCP superset with strict handler guards
 
-Register the seven allowed imperative tools once from a top-level client boundary and enforce state/revision/permission rules inside every invocation. OpenAI documents only a subset of the evolving WebMCP API and does not promise dynamic unregistration. Dynamic lifecycle cleverness was rejected in favor of reliable discovery and identical guards.
+Register the eight allowed imperative tools once from a top-level client boundary and enforce state/revision/permission rules inside every invocation. OpenAI documents only a subset of the evolving WebMCP API and does not promise dynamic unregistration. Dynamic lifecycle cleverness was rejected in favor of reliable discovery and identical guards.
 
 Authoritative references:
 

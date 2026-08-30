@@ -196,3 +196,37 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (production will be updated to this milestone commit after push).
 
 Current next milestone: M7 — the top-level WebMCP adapter, strict tool contracts, handlers, receipts, and availability state.
+
+## M7 — Scoped imperative WebMCP tools and staged review
+
+Work completed:
+
+- Added a top-level imperative adapter using `document.modelContext.registerTool()` with feature detection, an iframe guard, a per-document singleton promise for React Strict Mode, and one stable catalog of eight scoped tools.
+- Added strict, bounded JSON Schemas with `additionalProperties: false` and matching Zod validation for every input, including nested turn segments, response options, and staged rule proposals.
+- Added `get_rehearsal_brief`, `audit_rehearsal_readiness`, `start_approved_rehearsal`, `offer_partner_turn`, `read_latest_signal`, `get_rehearsal_report`, `stage_protocol_patch`, and `verify_support_guide`.
+- Made every handler read the current IndexedDB workspace at invocation time. Agent code has no signal-selection, resume, review, ratification, import/export, sharing, contact, assessment, or deletion capability.
+- Added metadata-only receipts for read, invalid, rejected, replayed, and successful invocations; full profile, signal, scenario, and turn prose are excluded.
+- Added exact person-authored semantic-signal reads, current-revision recovery, deterministic invalid-turn evidence, repaired-violation reporting, and Stop guards that do not advance the stopped session.
+- Added provenance-linked staged rule additions/updates with exact before/after data, prospective conflict and coverage checks, and agent-invisible draft defaults.
+- Added visible per-item Accept, Reject, and Rewrite-as-mine review. Ratification stays disabled until every staged item is visibly reviewed.
+- Added a visible Site tools availability bridge that refreshes the workspace after tool calls without capturing Zustand state.
+
+Validation run:
+
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 7 files, 55 tests.
+- WebMCP contract tests verify exactly-once registration, all eight schemas and handlers, current-state reads, strict bounds, stale recovery, invalid/repair behavior, exact signal authorship, Stop enforcement, staged provenance, metadata-only receipts, and forbidden-tool absence.
+- `pnpm test:e2e` passed: 22 tests across desktop and narrow Chromium.
+- Browser E2E injects a mock `document.modelContext`, observes eight unique top-level registrations, invokes real page handlers, rejects a long two-question turn, repairs it, and verifies that the accepted turn becomes visible in the Practice Room.
+- `pnpm build` passed as part of the Playwright production-server gate; an explicit final milestone build follows immediately before commit.
+
+Remaining risks:
+
+- The imperative API is experimental and the real ChatGPT built-in browser discovery check remains unverified until the final deployed tool build is available.
+- The complete 15-step Maya flow, including a mid-session owner profile edit, exact not-sure rephrase, stopped-session debrief, visible patch review, and guide verification, remains for M8.
+- Manual assistive-technology checks and release documentation remain outstanding.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently M6 commit `df5467e`; production will be updated after this M7 commit is pushed).
+
+Current next milestone: M8 — the complete deterministic Maya judge path, eval fixtures, staged review, and full-state E2E coverage.
