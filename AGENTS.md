@@ -34,6 +34,7 @@ pnpm start:static
 pnpm audit:prod
 pnpm audit:secrets
 pnpm capture:preview
+pnpm smoke:prod
 pnpm deploy
 ```
 

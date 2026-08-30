@@ -537,8 +537,10 @@ th { background: #e8eaf1; }
 
 @media (max-width: 420px) {
   .brand small { display: none; }
-  .product-header { padding-inline: 12px; }
-  .tool-status { max-width: 150px; }
+  .product-header { flex-wrap: wrap; padding-inline: 12px; }
+  .product-header .brand, .product-header .header-tools { min-width: 0; }
+  .product-header .header-tools { width: 100%; align-items: flex-start; }
+  .tool-status { max-width: 100%; overflow-wrap: anywhere; }
   .product-nav { padding-inline: 10px; }
   .safety-bar { position: static; flex-direction: column; padding: 12px; }
   .signal-board, .audit-summary, .revision-strip { grid-template-columns: 1fr; }

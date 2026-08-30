@@ -53,7 +53,7 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] Axe reports no serious or critical findings in tested major states.
 - [x] Static production build passes.
 - [x] Production dependency audit passes for the M9 release candidate: no known vulnerabilities.
-- [x] Secret-pattern scan passes for the M9 release candidate: 99 tracked/untracked release files.
+- [x] Secret-pattern scan passes for the release candidate: 100 tracked/untracked release files.
 - [ ] GitHub Actions passes for the final commit.
 
 ## Manual accessibility release record
@@ -71,14 +71,14 @@ See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. Automated keyboard
 
 - [x] Vercel project is authenticated and the production alias exists.
 - [x] Deployment is top-level HTTPS with no iframe wrapper, login, runtime secret, or database.
-- [ ] Final commit deployed and footer SHA matches the remote.
-- [ ] `/`, `/demo/`, `robots.txt`, favicon, OG asset, and error page checked in deployed Chromium.
-- [ ] Production security headers checked.
-- [ ] Offline-after-load behavior checked in deployed Chromium.
+- [x] Release-candidate commit deployed and footer SHA matches its remote SHA; repeat automatically for the final release-verification commit.
+- [x] `/`, `/demo/`, `robots.txt`, favicon, OG asset, product preview, and error response checked in deployed Chromium.
+- [x] Production CSP, frame denial, MIME, permissions, referrer, and HSTS headers checked.
+- [x] Human rehearsal remains operational when Chromium is taken offline after static assets load.
 - [ ] Latest eligible ChatGPT built-in browser discovers all eight tools — **unverified**.
 - [ ] Real ChatGPT completes the critical demo path — **unverified**.
 
-If ChatGPT discovery is unavailable because of client/model/rollout eligibility, record the exact client version, model, timestamp, observed status, and blocker here. The full human-only workflow remains valid, but do not claim real discovery passed.
+Blocker recorded 2026-08-31 01:33 +07:00: this execution environment provides standard Playwright Chromium but no eligible ChatGPT built-in-browser client/model session. Standard Chromium correctly showed `Site tools unavailable`; it cannot establish ChatGPT discovery. Client/model version is therefore unavailable. The full human-only workflow remains valid, but real discovery is not claimed.
 
 ## Content and safety review
 
@@ -96,7 +96,7 @@ If ChatGPT discovery is unavailable because of client/model/rollout eligibility,
 
 - [ ] Worktree is clean.
 - [ ] Latest local `main` equals `origin/main`.
-- [ ] GitHub description and homepage match the release.
+- [x] GitHub description and homepage match the release.
 - [ ] Submission copy has the final live and authorized video URLs.
 - [ ] Owner has explicitly authorized Devpost submission.
 - [ ] After confirmed submission only: create the release tag and hold the judged deployment stable.

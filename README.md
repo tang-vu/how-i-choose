@@ -131,6 +131,7 @@ pnpm test:e2e
 pnpm build
 pnpm audit:prod
 pnpm audit:secrets
+pnpm smoke:prod
 ```
 
 Playwright builds and serves the static export on port 4173. Its desktop and narrow projects cover onboarding, editing, human practice, mocked imperative tools, the complete judge path, Stop, stale recovery, staged review, visible ratification, persistence, history, import/export, accessibility preferences, and axe checks. Unit/property tests cover deterministic invariants and machine-readable agent-flow fixtures.

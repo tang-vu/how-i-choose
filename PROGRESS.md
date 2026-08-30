@@ -288,7 +288,7 @@ Validation run:
 - New release accessibility tests passed in both projects; axe reported zero serious or critical findings in forced-colors/reduced-motion and the complete judge states.
 - `pnpm build` passed; `/`, `/_not-found`, and `/demo` were emitted as static routes.
 - `pnpm audit:prod` passed with no known vulnerabilities.
-- `pnpm audit:secrets` passed across 99 tracked and untracked release files.
+- `pnpm audit:secrets` passed across all tracked and untracked release files (100 in the final candidate).
 - The deploy helper passed a non-uploading Vercel `--dry` inspection after its Windows command path was corrected; only source inputs remain after the explicit ignore rules.
 - `git diff --check` passed; only expected Git line-ending notices were emitted.
 - Latest pre-M9 GitHub Actions run for M8 is green; the M9 CI result will be checked after push.
@@ -303,3 +303,40 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (currently M8 commit `e346797`; production will be updated after this M9 commit is pushed).
 
 Current next milestone: M10 — final SHA deployment, production/browser audits, repository parity, and honest real-ChatGPT verification status.
+
+## M10 — Production verification and release audit
+
+Work completed:
+
+- Pushed and deployed the M9 release candidate over HTTPS with its 12-character source SHA visible in the footer.
+- Added a repeatable production Chromium smoke covering `/`, `/demo/`, the 404 response, robots, favicon, OG image, product preview, security headers, third-party-origin isolation, unsupported Site-tools status, and human rehearsal after the browser goes offline.
+- Verified the canonical production alias returns build `38f0ef526c63`, no external origin requests, and no console errors.
+- Verified local IndexedDB interaction continues after loaded static assets lose network access: start, valid partner turn, person-selected more-time signal, and explicit human acknowledgment all complete offline.
+- Investigated the M9 GitHub Actions failure instead of treating local parallel results as sufficient. Linux Chromium exposed 9 pixels of narrow-header overflow and two retry races.
+- Fixed the 320px header to wrap its Site-tools status, made the channel editor unavailable during an in-flight owner command, and made onboarding/reset waits deterministic. A CI-mode, one-worker rerun passed all 24 affected desktop/narrow tests without retries.
+- Confirmed GitHub repository visibility, MIT detection, description, homepage, default branch, and remote ownership.
+- Recorded the exact external ChatGPT blocker: no eligible built-in-browser client/model session is available in this execution environment. Standard Chromium correctly reports Site tools unavailable; real ChatGPT discovery and the real-agent path remain unverified.
+
+Validation run:
+
+- Production deployment `dpl_33tiorQTSLBkXXMEpYyVhDhNuEzX` reached READY and was aliased to https://how-i-choose.vercel.app.
+- `pnpm smoke:prod` passed against the canonical URL for build `38f0ef526c63`.
+- Production CSP, HSTS, frame denial, MIME, permissions, and referrer headers passed assertions.
+- Production root, demo, robots, favicon, OG image, product preview, and missing-route response passed.
+- CI-mode targeted Playwright passed: 24 tests, one worker, desktop and narrow, no retries.
+- `pnpm lint`, `pnpm typecheck`, and `pnpm test` passed after integration: 8 files and 61 tests.
+- Full Playwright passed in CI mode with one worker: 34 tests across desktop and narrow Chromium, no retries.
+- Explicit `pnpm build` passed with all three static routes.
+- Production dependency audit again reported no known vulnerabilities; the secret scan passed all 100 release files.
+- Final source-SHA deployment and its matching production smoke follow immediately after this release-verification commit is pushed.
+
+Remaining risks and manual actions:
+
+- Real ChatGPT discovery and the real-agent demo require the owner to open the production `/demo/` URL in an eligible ChatGPT built-in browser/model and follow `DEMO_SCRIPT.md`.
+- Human NVDA/screen-reader and 400% browser-zoom checks remain unverified; automated axe, keyboard, forced-colors, reduced-motion, print, and 320px checks are green.
+- Recording/publishing the video and submitting Devpost remain prohibited until explicit owner authorization.
+- Do not create the `v0.1.0` tag or freeze the judged deployment until the owner confirms submission.
+
+Verified deployment URL: https://how-i-choose.vercel.app
+
+Current next action: run final gates, push the release-verification commit, deploy that exact SHA, verify production/CI parity, then hand off only the manual ChatGPT, assistive-technology, video, and submission actions.

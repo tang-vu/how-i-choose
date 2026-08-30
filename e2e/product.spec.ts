@@ -94,6 +94,7 @@ test("scenario templates require review and the last profile draft edit can be u
   await expect(page.getByRole("button", { name: "Review this scenario" })).toBeVisible();
 
   await page.getByRole("button", { name: "Reset judge demo" }).click();
+  await expect(page.locator(".revision-strip")).toContainText("ready · v1");
   await page.getByLabel("Allowed communication channels").selectOption("text");
   await expect(page.getByLabel("Allowed communication channels")).toHaveValue("text");
   await page.getByRole("button", { name: "Undo last draft edit" }).click();

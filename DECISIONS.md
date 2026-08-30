@@ -72,3 +72,11 @@ Require a successful support-guide derivation receipt for the current profile re
 ## D-016 — Judge reset stops at Ready
 
 Reset the synthetic Maya session to `ready`, not `active`. The scenario is already visibly owner-approved, but a human or agent must explicitly start the rehearsal. Auto-starting was rejected because it hides an important owner-controlled state boundary and prevents the `start_approved_rehearsal` tool from being demonstrated honestly.
+
+## D-017 — Separate production, mocked WebMCP, and real ChatGPT evidence
+
+Use a repeatable Playwright production smoke to verify routes, assets, headers, footer SHA, origin isolation, honest unsupported state, and offline-after-load human operation. Keep mocked `document.modelContext` contract/browser results separate from real ChatGPT discovery. Ordinary Chromium cannot substitute for an eligible ChatGPT built-in-browser client, so the final release records that external evidence as unverified instead of weakening or simulating it.
+
+## D-018 — Embed the pushed SHA during deployment
+
+The deploy helper reads the current 12-character Git SHA and passes it as a build-time value. Release order is push, verify remote parity, deploy, then production smoke. Relying on a locally generated `local` label or an implicit hosting-provider Git variable was rejected because judges and maintainers need to match the visible build to public source.

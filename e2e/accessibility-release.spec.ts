@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function openWorkspace(page: Page) {
   await page.goto("/demo/");
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Maya — synthetic sample" })).toBeVisible();
   const continueButton = page.getByRole("button", { name: "Continue with current local data" });
   if (await continueButton.isVisible()) {
     await continueButton.focus();

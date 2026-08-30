@@ -549,6 +549,7 @@ export function WorkspaceApp() {
                       {rule.category === "channel" && <label>Allowed communication channels
                         <select
                           aria-label="Allowed communication channels"
+                          disabled={busy}
                           onChange={(event) => {
                             const textOnly = event.target.value === "text";
                             setUndoProfile(structuredClone(profile));
