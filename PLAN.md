@@ -12,7 +12,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: public GitHub repository; clean local/remote `main`; commit `9c2f70b`.
 - [x] M2 — Record the product contract, delivery plan, decisions, progress, and risks.
   - Validation: required five root documents exist, cross-check the brief, `git diff --check`, push verified.
-- [ ] M3 — Scaffold pinned Next.js App Router, Tailwind, TypeScript, testing, CI, static-export, local assets, metadata, and preview deployment.
+- [x] M3 — Scaffold pinned Next.js App Router, Tailwind, TypeScript, testing, CI, static-export, local assets, metadata, and preview deployment.
   - Dependencies: M2; authenticated free Vercel account.
   - Validation: install, lint, typecheck, unit smoke, E2E smoke, static build, direct `/demo` route, HTTPS preview.
 - [ ] M4 — Implement schemas, pure rehearsal state machine, canonicalization/hash, policy/conflict/turn/report engines, and fixtures.

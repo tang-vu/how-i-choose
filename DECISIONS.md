@@ -56,3 +56,11 @@ Describe IndexedDB as local and unencrypted. Explain that fields explicitly mark
 ## D-012 — Low-stakes synthetic scope only
 
 The first release supports self-authored adult profiles and synthetic low-stakes rehearsals. No minors, proxies, clinical decisions, emergencies, legal/financial decisions, crisis handling, or consent/capacity claims. The report evaluates the partner only.
+
+## D-013 — Supported-current versions over unsupported newest majors
+
+Version checks on 2026-08-30 found TypeScript 7 and ESLint 10 as newest registry majors, but the current Next.js lint stack declared peer support through TypeScript 6 and ESLint 9. Pin TypeScript 6.0.3 and ESLint 9.39.5 until upstream compatibility lands; pin all other current compatible packages in the lockfile. Unsupported peer combinations were rejected even though their version numbers were newer.
+
+## D-014 — Dedicated Playwright port and production output
+
+Serve the static export on port 4173 with `reuseExistingServer: false`. Port 3000 was already occupied by an unrelated local application during the first run, which produced false failures. Reusing an arbitrary existing server was rejected because E2E evidence must belong to this repository's current output.

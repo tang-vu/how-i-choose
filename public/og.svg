@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f4f1e8"/>
+  <circle cx="1040" cy="110" r="270" fill="#ffe4a7" opacity=".72"/>
+  <path fill="#263e8c" d="M86 78h142a48 48 0 0 1 0 96h-62l-43 43v-43H86a48 48 0 0 1 0-96Z"/>
+  <circle cx="267" cy="205" r="48" fill="#a8322b"/>
+  <path fill="#f4f1e8" d="M248 186h38v38h-38z"/>
+  <text x="86" y="338" fill="#101a3a" font-family="Georgia, serif" font-size="92">How I Choose</text>
+  <text x="90" y="416" fill="#263e8c" font-family="Arial, sans-serif" font-size="40" font-weight="700">My signals. My pace. How I choose.</text>
+  <text x="90" y="500" fill="#415070" font-family="Arial, sans-serif" font-size="28">Communication practice that respects every signal.</text>
+</svg>

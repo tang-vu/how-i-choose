@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# Next.js and static output
+.next/
+out/
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# hosting
+.vercel/
+.netlify/
+
+# local environment
+.env
+.env.*
+!.env.example
+
+# editor and operating system
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+.vercel

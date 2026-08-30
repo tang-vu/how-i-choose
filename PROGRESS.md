@@ -71,4 +71,34 @@ Remaining risks:
 
 Verified deployment URL: none yet.
 
-Current next milestone: M3 — application scaffold, quality gates, and early preview deployment.
+## M3 — Application scaffold, quality gates, and early production deployment
+
+Work completed:
+
+- Added a pinned Next.js 16 App Router and React 19 static-export application with strict TypeScript, Tailwind CSS 4, ESLint, Vitest, Testing Library, fast-check, Playwright, axe, Dexie, Zustand, and Zod.
+- Added an original responsive product shell, semantic primary navigation, synthetic `/demo/` route, local favicon/OG artwork, no runtime external fonts, useful 404 page, build/version footer, visible Site tools feature detection, and baseline privacy/safety wording.
+- Added strict CSP and security headers for Vercel, production-static Playwright serving, desktop/narrow projects, and initial accessibility smoke checks.
+- Deployed production over HTTPS and connected the public GitHub repository to the authenticated Vercel project.
+- Updated the GitHub repository description, homepage, and confirmed MIT license detection.
+
+Validation run:
+
+- `pnpm peers check` passed with no peer dependency issues.
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 1 file, 2 tests.
+- `pnpm test:e2e` passed: 6 tests across desktop and narrow Chromium; initial `/` and `/demo/` states had zero serious or critical axe findings.
+- `pnpm build` passed and emitted static `/`, `/demo`, and 404 pages.
+- HTTPS smoke checks returned `200` for `/` and `/demo/`, with CSP, Permissions Policy, HSTS, referrer, nosniff, and frame-deny headers present.
+- The first production deployment was created from the pre-scaffold Git HEAD; it will be redeployed after this milestone commit so the visible footer matches source.
+
+Remaining risks:
+
+- The current shell is not yet the complete interactive product.
+- Manual keyboard, screen-reader, forced-colors, and 400% reflow checks are not yet complete.
+- Real ChatGPT Site tools discovery remains unverified because tools are not implemented yet.
+- Vercel reports the broad Node engine range may auto-upgrade; pinning the deployment major is deferred to release hardening.
+
+Verified deployment URL: https://how-i-choose.vercel.app
+
+Current next milestone: M4 — versioned domain model, deterministic rehearsal engine, and property tests.
