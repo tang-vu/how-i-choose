@@ -264,3 +264,42 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (currently M7 commit `0adae2e`; production will be updated after this M8 commit is pushed).
 
 Current next milestone: M9 — security/privacy hardening, complete documentation, screenshot, release automation, submission copy, and timed demo script.
+
+## M9 — Release hardening, documentation, and submission package
+
+Work completed:
+
+- Added the complete root documentation set: product README, architecture, WebMCP adapter, security policy, privacy model, threat model, limitations, compensated co-design plan, roadmap, contribution guide, accessibility review, changelog, judge checklist, timed demo script, and polished submission copy.
+- Captured and visually inspected a synthetic production screenshot at `public/product-preview.png`; the README uses it as the product preview.
+- Added a 2:40 demo plan with the exact in-product ChatGPT prompt, action/narration timestamps, recording-integrity rules, and explicit owner-authorization gates for video publication and Devpost submission.
+- Added production dependency and tracked/untracked release-file secret scans to local scripts and CI. The secret scan excludes binary assets and records no authored content.
+- Added a cross-platform Vercel deploy helper that embeds the current 12-character Git SHA at build time for footer/remote verification.
+- Added an explicit Vercel ignore list so generated build, report, coverage, and TypeScript-cache artifacts are not uploaded as deployment source.
+- Added automated keyboard activation/skip-link, forced-colors, reduced-motion, 320 CSS pixel reflow, and print support-guide coverage in both Playwright projects.
+- Audited registered capabilities, dangerous rendering/network patterns, forbidden tool names, and prohibited positioning phrases. Forbidden capability names occur only in negative tests/evals; sensitive positioning phrases occur only in explicit limitations or safety boundaries.
+- Verified GitHub remains public under `tang-vu`, detects the MIT license, uses `main`, and has the expected repository description/homepage.
+
+Validation run:
+
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 8 files, 61 tests.
+- `pnpm test:e2e` passed: 34 tests across desktop and narrow Chromium.
+- New release accessibility tests passed in both projects; axe reported zero serious or critical findings in forced-colors/reduced-motion and the complete judge states.
+- `pnpm build` passed; `/`, `/_not-found`, and `/demo` were emitted as static routes.
+- `pnpm audit:prod` passed with no known vulnerabilities.
+- `pnpm audit:secrets` passed across 99 tracked and untracked release files.
+- The deploy helper passed a non-uploading Vercel `--dry` inspection after its Windows command path was corrected; only source inputs remain after the explicit ignore rules.
+- `git diff --check` passed; only expected Git line-ending notices were emitted.
+- Latest pre-M9 GitHub Actions run for M8 is green; the M9 CI result will be checked after push.
+
+Remaining risks:
+
+- Real ChatGPT built-in browser discovery and the complete real-agent path remain unverified; mocks are not treated as proof.
+- Human NVDA/screen-reader and 400% zoom checks remain unverified; the exact manual checklist is published and automated keyboard/media/reflow coverage is green.
+- Final production must be deployed from the pushed SHA, then checked for footer parity, headers, offline-after-load behavior, routes/assets, and Chromium behavior.
+- Demo video publication and Devpost submission require explicit owner authorization and have not been performed.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently M8 commit `e346797`; production will be updated after this M9 commit is pushed).
+
+Current next milestone: M10 — final SHA deployment, production/browser audits, repository parity, and honest real-ChatGPT verification status.

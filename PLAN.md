@@ -29,7 +29,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M8 — Complete the deterministic Maya judge path, staged patch review, derivation-checked support guide, adherence report, eval fixtures, and complete E2E suite.
   - Dependencies: M6–M7.
   - Validation: the 15-step critical path runs through mocked tools; no person scores; direct owner controls work; all gates green.
-- [ ] M9 — Harden security/privacy, dependency/update automation, CSP/headers, secret and dependency scanning, release documentation, screenshots, submission copy, and demo script.
+- [x] M9 — Harden security/privacy, dependency/update automation, CSP/headers, secret and dependency scanning, release documentation, screenshots, submission copy, and demo script.
   - Validation: audit results recorded, prohibited-claim search clean, docs complete, demo timed under three minutes.
 - [ ] M10 — Deploy production, update repository metadata, smoke-test Chromium and the latest eligible ChatGPT built-in browser, and run the final release audit.
   - Validation: live HTTPS URL works without login; `/demo` resets; source link and build SHA display; remote equals local; ChatGPT discovery verified or precisely marked unverified.

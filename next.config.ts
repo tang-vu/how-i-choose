@@ -8,7 +8,10 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version ?? "0.1.0",
     NEXT_PUBLIC_BUILD_COMMIT:
-      process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local",
+      process.env.NEXT_PUBLIC_BUILD_COMMIT ??
+      process.env.VERCEL_GIT_COMMIT_SHA ??
+      process.env.GITHUB_SHA ??
+      "local",
   },
 };
 

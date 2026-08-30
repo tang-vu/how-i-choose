@@ -31,10 +31,13 @@ pnpm test:e2e
 pnpm test:e2e:ui
 pnpm build
 pnpm start:static
+pnpm audit:prod
+pnpm audit:secrets
+pnpm capture:preview
 pnpm deploy
 ```
 
-`pnpm deploy` targets the configured free HTTPS host. Never purchase a plan or domain. The command must not be used without authenticated hosting access.
+`pnpm capture:preview` refreshes the synthetic public screenshot from the deployed demo. `pnpm deploy` targets the configured free HTTPS host and embeds the current Git SHA in the build footer. Never purchase a plan or domain. The deploy command must not be used without authenticated hosting access.
 
 ## Architectural boundaries
 
