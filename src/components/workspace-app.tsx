@@ -1,0 +1,517 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStore } from "zustand";
+
+import { AgentRehearsalService } from "@/application/agent-rehearsal-service";
+import { browserCommandDependencies } from "@/application/command-bus";
+import { OwnerWorkflowService, type WorkspaceIds } from "@/application/owner-workflow-service";
+import { BrandMark } from "@/components/brand-mark";
+import { SiteToolsStatus } from "@/components/site-tools-status";
+import { findActiveRuleConflicts } from "@/domain/conflict-engine";
+import { activeRulesForContext, isFieldDisclosed } from "@/domain/profile";
+import { buildAgentProfileProjection } from "@/domain/provenance";
+import { buildRehearsalReport } from "@/domain/report-engine";
+import type { SignalMeaning } from "@/domain/signals";
+import { validMayaTurn } from "@/fixtures/maya";
+import { getDatabase, type ActivityReceipt, type ProfileVersionRecord } from "@/persistence/db";
+import { exportWorkspaceJson, importWorkspaceJson } from "@/persistence/import-export";
+import { WorkspaceRepository } from "@/persistence/repository";
+import { appStore } from "@/state/app-store";
+
+const workspaceIds: WorkspaceIds = {
+  profileId: "profile-maya",
+  sessionId: "session-maya-demo",
+  scenarioId: "scenario-community-workshop",
+};
+
+const starterPrompt = `Use How I Choose’s Site tools to rehearse the approved community-workshop scenario. Read and audit the current brief first. To demonstrate the guardrails, intentionally attempt one long two-question partner turn once, then repair it using the structured validation error. Continue only after I tell you I responded on the page. Never infer agreement, never answer for me, and never ratify, publish, share, or export anything. Stop immediately if the red signal appears.`;
+
+const signalTone: Record<SignalMeaning, string> = {
+  yes: "green",
+  no: "slate",
+  not_sure: "amber",
+  need_information: "purple",
+  need_more_time: "blue",
+  rephrase: "orange",
+  pause: "slate",
+  stop: "red",
+  custom: "indigo",
+};
+
+function commandInput(workspace: NonNullable<ReturnType<typeof appStore.getState>["workspace"]>) {
+  return {
+    expectedProfileRevision: workspace.profile.revision,
+    expectedSessionVersion: workspace.session.sessionVersion,
+    idempotencyKey: `ui-${crypto.randomUUID()}`,
+  };
+}
+
+export function WorkspaceApp() {
+  const workspace = useStore(appStore, (state) => state.workspace);
+  const hydration = useStore(appStore, (state) => state.hydration);
+  const hydrationError = useStore(appStore, (state) => state.errorCode);
+  const repository = useMemo(() => new WorkspaceRepository(getDatabase()), []);
+  const owner = useMemo(
+    () => new OwnerWorkflowService(repository, workspaceIds, browserCommandDependencies),
+    [repository],
+  );
+  const humanPartner = useMemo(
+    () => new AgentRehearsalService(repository, workspaceIds, browserCommandDependencies, "owner_ui"),
+    [repository],
+  );
+  const [receipts, setReceipts] = useState<ActivityReceipt[]>([]);
+  const [versions, setVersions] = useState<ProfileVersionRecord[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("Loading your local workspace.");
+  const [onboarding, setOnboarding] = useState(true);
+  const [mode, setMode] = useState<"human" | "agent">("human");
+  const [highContrast, setHighContrast] = useState(false);
+  const [quietMode, setQuietMode] = useState(false);
+  const [plainLanguage, setPlainLanguage] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [textScale, setTextScale] = useState<1 | 1.15 | 1.3>(1);
+
+  const refresh = useCallback(async () => {
+    await appStore.getState().refresh(repository, workspaceIds);
+    const [nextReceipts, nextVersions] = await Promise.all([
+      repository.listReceipts(),
+      repository.listProfileVersions(workspaceIds.profileId),
+    ]);
+    setReceipts(nextReceipts);
+    setVersions(nextVersions);
+  }, [repository]);
+
+  useEffect(() => {
+    const initialize = async () => {
+      await appStore.getState().hydrate(repository, workspaceIds);
+      if (!appStore.getState().workspace) {
+        await owner.resetSyntheticDemo();
+      }
+      await refresh();
+      setOnboarding(localStorage.getItem("how-i-choose-onboarded") !== "yes");
+      setNotice("Your local workspace is ready.");
+    };
+    void initialize();
+  }, [owner, refresh, repository]);
+
+  const run = useCallback(async (
+    action: () => Promise<{ ok: boolean; code: string } | void>,
+    successMessage: string,
+  ) => {
+    setBusy(true);
+    try {
+      const result = await action();
+      await refresh();
+      setNotice(
+        result && !result.ok
+          ? `${result.code}. Nothing was partially applied.`
+          : successMessage,
+      );
+    } catch (error) {
+      const correlation = `local-${crypto.randomUUID().slice(0, 8)}`;
+      setNotice(`That action could not be completed (${correlation}). Your existing data is unchanged.`);
+      console.error(correlation, error);
+    } finally {
+      setBusy(false);
+    }
+  }, [refresh]);
+
+  const finishOnboarding = useCallback(() => {
+    localStorage.setItem("how-i-choose-onboarded", "yes");
+    setOnboarding(false);
+  }, []);
+
+  if (hydration === "idle" || hydration === "loading" || !workspace) {
+    return (
+      <main className="workspace-loading" aria-busy="true">
+        <BrandMark size={56} />
+        <h1>{hydrationError ? "Your local workspace could not open." : "Opening your local workspace…"}</h1>
+        <p>{hydrationError ?? "No network or account is needed."}</p>
+      </main>
+    );
+  }
+
+  const { profile, scenario, session } = workspace;
+  const activeRules = activeRulesForContext(profile, session.contextId);
+  const conflicts = findActiveRuleConflicts(activeRules);
+  const projection = buildAgentProfileProjection(profile, session, scenario);
+  const report = buildRehearsalReport(session, new Date().toISOString());
+  const latestVersion = versions.at(-1);
+  const guideIsDraft = !latestVersion || latestVersion.revision !== profile.revision;
+  const pendingSignal = session.pendingSignalEventId
+    ? session.events.find((event) => event.id === session.pendingSignalEventId)
+    : undefined;
+  const acceptedTurns = session.events.filter((event) => event.type === "partner_turn_accepted");
+  const canOfferTurn = session.state === "active" && !pendingSignal;
+
+  const resetSample = () => run(async () => {
+    await owner.resetSyntheticDemo();
+  }, "Synthetic Maya demo restored to its starting state.");
+  const resetBlank = () => run(async () => {
+    await owner.resetBlankProfile();
+  }, "Blank self-authored profile created.");
+
+  const selectSignal = (signalId: string) =>
+    run(
+      () => owner.selectSignal({ ...commandInput(workspace), signalId }),
+      "Your signal was recorded exactly as selected.",
+    );
+
+  const exportJson = async () => {
+    const json = await exportWorkspaceJson(repository, new Date().toISOString());
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "how-i-choose-profile.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setNotice("A local JSON export was prepared by your visible action.");
+  };
+
+  const importJson = async (file: File | undefined) => {
+    if (!file) return;
+    await run(async () => {
+      await importWorkspaceJson(repository, await file.text());
+    }, "The validated local JSON file was imported.");
+  };
+
+  const copyPrompt = async () => {
+    await navigator.clipboard.writeText(starterPrompt);
+    setNotice("The ChatGPT starter prompt was copied.");
+  };
+
+  return (
+    <div
+      className="product-app"
+      data-contrast={highContrast ? "high" : "standard"}
+      data-quiet={quietMode}
+      data-reduced-motion={reducedMotion}
+      style={{ "--user-text-scale": textScale } as React.CSSProperties}
+    >
+      <a className="skip-link" href="#workspace-main">Skip to main content</a>
+      <div className="live-region" aria-live="polite" aria-atomic="true">{notice}</div>
+
+      <header className="product-header">
+        <Link className="brand" href="/" aria-label="How I Choose home">
+          <BrandMark />
+          <span><strong>How I Choose</strong><small>My signals. My pace. How I choose.</small></span>
+        </Link>
+        <div className="header-tools">
+          <span className="alpha-badge">Open alpha</span>
+          <SiteToolsStatus />
+        </div>
+      </header>
+
+      <nav className="product-nav" aria-label="Primary">
+        {[
+          ["my-signals", "My Signals"],
+          ["practice-room", "Practice Room"],
+          ["what-helps", "What Helps"],
+          ["rehearsal-audit", "Rehearsal Audit"],
+          ["support-guide", "Support Guide"],
+          ["history", "History"],
+          ["privacy", "Privacy"],
+        ].map(([id, label]) => <a href={`#${id}`} key={id}>{label}</a>)}
+      </nav>
+
+      {(session.state === "active" || session.state === "paused") && (
+        <div className="safety-bar" role="region" aria-label="Persistent rehearsal controls">
+          <div>
+            <strong>{session.state === "paused" ? "Rehearsal paused" : "Rehearsal active"}</strong>
+            <span>{pendingSignal?.type === "signal_selected" ? ` Pending: ${pendingSignal.meaning.replaceAll("_", " ")}.` : " You control the pace."}</span>
+          </div>
+          <div>
+            {session.state === "paused" ? (
+              <button
+                className="control-button resume"
+                disabled={busy}
+                onClick={() => run(() => owner.resume(commandInput(workspace)), "You resumed through the visible page.")}
+                type="button"
+              >Resume</button>
+            ) : (
+              <button
+                className="control-button pause"
+                disabled={busy}
+                onClick={() => {
+                  const signal = profile.signals.find(({ semanticMeaning }) => semanticMeaning === "pause");
+                  if (signal) void selectSignal(signal.id);
+                }}
+                type="button"
+              >Pause</button>
+            )}
+            <button
+              className="control-button stop"
+              disabled={busy}
+              onClick={() => {
+                const signal = profile.signals.find(({ semanticMeaning }) => semanticMeaning === "stop");
+                if (signal) void selectSignal(signal.id);
+              }}
+              type="button"
+            >Stop</button>
+          </div>
+        </div>
+      )}
+
+      {onboarding && (
+        <section className="onboarding-panel" aria-labelledby="onboarding-title">
+          <div>
+            <p className="eyebrow">First time here</p>
+            <h1 id="onboarding-title">Start with your signals—not a diagnosis.</h1>
+            <p>This alpha is for adults authoring their own communication preferences. Communication difficulty is not inability to decide.</p>
+          </div>
+          <ol>
+            <li><strong>Define what helps.</strong><span>Choose pacing, wording, channels, and signals.</span></li>
+            <li><strong>Practice at your pace.</strong><span>No timers, auto-advance, or inferred agreement.</span></li>
+            <li><strong>Review the partner.</strong><span>The audit never grades you.</span></li>
+          </ol>
+          <div className="onboarding-actions">
+            <button className="button primary" onClick={() => { void resetSample(); finishOnboarding(); }} type="button">Use synthetic Maya sample</button>
+            <button className="button secondary" onClick={() => { void resetBlank(); finishOnboarding(); }} type="button">Start a blank profile</button>
+            <button className="text-button" onClick={finishOnboarding} type="button">Continue with current local data</button>
+          </div>
+        </section>
+      )}
+
+      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+        <section className="workspace-intro" aria-labelledby="workspace-title">
+          <div>
+            <p className="eyebrow">{profile.title.includes("Maya") ? "Synthetic sample profile" : "Self-authored profile"}</p>
+            <h1 id="workspace-title">{profile.title}</h1>
+            <p>{plainLanguage ? "Choose how people ask, wait, and respond to your signals." : "A local-first workspace for defining, rehearsing, and documenting how a communication partner should adapt."}</p>
+          </div>
+          <dl className="revision-strip">
+            <div><dt>Profile</dt><dd>revision {profile.revision}</dd></div>
+            <div><dt>Ratified</dt><dd>{profile.ratifiedVersion ? `version ${profile.ratifiedVersion}` : "not yet"}</dd></div>
+            <div><dt>Agent access</dt><dd>{projection.sharedFieldCount} of {projection.totalFieldCount} fields</dd></div>
+            <div><dt>Session</dt><dd>{session.state.replaceAll("_", " ")} · v{session.sessionVersion}</dd></div>
+          </dl>
+          <div className="toolbar" aria-label="Workspace actions">
+            <button className="button secondary" disabled={busy} onClick={() => void resetSample()} type="button">Reset judge demo</button>
+            <button className="button secondary" disabled={busy} onClick={() => void resetBlank()} type="button">New blank profile</button>
+            <button className="button secondary" onClick={() => void exportJson()} type="button">Export JSON</button>
+            <label className="button secondary file-button">Import JSON<input accept="application/json,.json" onChange={(event) => void importJson(event.target.files?.[0])} type="file" /></label>
+          </div>
+        </section>
+
+        <section className="product-section" id="my-signals" aria-labelledby="signals-title">
+          <div className="section-heading">
+            <div><p className="eyebrow">01 · Source of truth</p><h2 id="signals-title">My Signals</h2></div>
+            <p>You select every semantic signal directly. Silence creates no event and never means yes.</p>
+          </div>
+
+          <form
+            className="profile-title-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              void run(() => owner.updateProfileTitle({ ...commandInput(workspace), title: String(data.get("title")) }), "Profile title saved as a new draft revision.");
+            }}
+          >
+            <label htmlFor="profile-title">Profile title</label>
+            <input defaultValue={profile.title} id="profile-title" key={`${profile.revision}-title`} maxLength={120} name="title" required />
+            <button className="button secondary" disabled={busy} type="submit">Save title</button>
+          </form>
+
+          <div className="signal-board" aria-label="Semantic signal board">
+            {profile.signals.map((signal) => {
+              const allowed = session.state === "active" || (session.state === "paused" && signal.semanticMeaning === "stop");
+              return (
+                <button
+                  className={`signal-button ${signalTone[signal.semanticMeaning]}`}
+                  disabled={busy || !allowed}
+                  key={signal.id}
+                  onClick={() => void selectSignal(signal.id)}
+                  title={allowed ? signal.expectedPartnerAction : "Start or resume a rehearsal to use this signal."}
+                  type="button"
+                >
+                  <span className="signal-shape" aria-hidden="true" />
+                  <strong>{signal.label}</strong>
+                  <small>{signal.description}</small>
+                </button>
+              );
+            })}
+          </div>
+
+          <details className="editor-panel">
+            <summary>Add a custom signal</summary>
+            <form
+              className="stacked-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const data = new FormData(form);
+                void run(() => owner.addCustomSignal({
+                  ...commandInput(workspace),
+                  label: String(data.get("label")),
+                  description: String(data.get("description")),
+                  expectedPartnerAction: String(data.get("action")),
+                  agentVisible: data.get("visible") === "on",
+                }), "Custom signal added as a draft change.");
+                form.reset();
+              }}
+            >
+              <label>Visible label<input maxLength={120} name="label" required /></label>
+              <label>What it means<textarea maxLength={500} name="description" required /></label>
+              <label>What the partner should do<textarea maxLength={500} name="action" required /></label>
+              <label className="check-row"><input name="visible" type="checkbox" /> Agent may read this signal in the active rehearsal</label>
+              <button className="button primary" disabled={busy} type="submit">Add signal</button>
+            </form>
+          </details>
+        </section>
+
+        <section className="product-section practice-section" id="practice-room" aria-labelledby="practice-title">
+          <div className="section-heading">
+            <div><p className="eyebrow">02 · Owner-controlled</p><h2 id="practice-title">Practice Room</h2></div>
+            <div className="segmented" role="group" aria-label="Practice mode">
+              <button aria-pressed={mode === "human"} onClick={() => setMode("human")} type="button">Human-only</button>
+              <button aria-pressed={mode === "agent"} onClick={() => setMode("agent")} type="button">Agent rehearsal</button>
+            </div>
+          </div>
+
+          <div className="scenario-card">
+            <div><span className="status-label">{scenario.synthetic ? "Synthetic low-stakes scenario" : "Self-authored low-stakes scenario"}</span><h3>{scenario.title}</h3><p>{scenario.summary}</p></div>
+            <div className="scenario-actions">
+              {session.state === "scenario_draft" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.submitScenarioForReview(commandInput(workspace)), "Scenario is awaiting your visible approval.")} type="button">Review this scenario</button>}
+              {session.state === "awaiting_owner_review" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.approveScenario(commandInput(workspace)), "Scenario approved through the visible page.")} type="button">Approve scenario</button>}
+              {session.state === "ready" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.startHumanRehearsal(commandInput(workspace)), "Human-only rehearsal started.")} type="button">Start human rehearsal</button>}
+            </div>
+          </div>
+
+          {mode === "human" ? (
+            <div className="practice-grid">
+              <div>
+                <h3>Partner turns</h3>
+                {acceptedTurns.length === 0 ? <p className="empty-state">No partner turn yet. The page will never auto-advance.</p> : (
+                  <ol className="turn-list">
+                    {acceptedTurns.map((event) => <li key={event.id}>{event.turn.segments.map(({ text }) => text).join(" ")}<small>Accepted under profile revision {session.profileRevision}</small></li>)}
+                  </ol>
+                )}
+              </div>
+              <div className="secondary-panel">
+                <h3>Human partner practice</h3>
+                <p>Use the same deterministic validator as an agent turn.</p>
+                <button
+                  className="button primary"
+                  disabled={busy || !canOfferTurn}
+                  onClick={() => void run(() => humanPartner.offerPartnerTurn({ ...commandInput(workspace), turn: validMayaTurn }), "The validated human partner turn is visible in the room.")}
+                  type="button"
+                >Offer the sample one-question turn</button>
+                {!canOfferTurn && <p className="disabled-reason">{session.state !== "active" ? `Unavailable while session is ${session.state.replaceAll("_", " ")}.` : "A pending signal must be acknowledged first."}</p>}
+              </div>
+            </div>
+          ) : (
+            <div className="agent-mode-panel">
+              <div><h3>Work beside ChatGPT through Site tools</h3><p>The agent can read only shared fields, offer validated turns, and stage suggestions. It cannot select your signal, resume, ratify, publish, share, or export.</p></div>
+              <textarea aria-label="ChatGPT starter prompt" readOnly rows={7} value={starterPrompt} />
+              <button className="button primary" onClick={() => void copyPrompt()} type="button">Copy ChatGPT starter prompt</button>
+            </div>
+          )}
+
+          {session.state === "paused" && <div className="persistent-message pause-message" role="status"><strong>Paused.</strong> No new partner turn can appear. Only you can resume through the visible button above.</div>}
+          {session.state === "stopped" && <div className="persistent-message stop-message" role="alert"><strong>Stopped.</strong> This rehearsal is terminal. Further partner turns are blocked.</div>}
+        </section>
+
+        <section className="product-section" id="what-helps" aria-labelledby="helps-title">
+          <div className="section-heading"><div><p className="eyebrow">03 · Controlled rules</p><h2 id="helps-title">What Helps</h2></div><p>Draft and retired rules do not affect rehearsal evaluation.</p></div>
+          {profile.rules.length === 0 ? <p className="empty-state">No communication rules yet. Start with channel, one-question, pacing, processing time, language, or signal handling.</p> : (
+            <div className="rule-list">
+              {profile.rules.map((rule) => {
+                const shared = rule.agentVisible && isFieldDisclosed(profile, "rule", rule.id);
+                return (
+                  <article className="rule-card" key={rule.id}>
+                    <div className="rule-meta"><span>{rule.category.replaceAll("_", " ")}</span><span>{rule.strength} · {rule.effect}</span><span>{rule.status}</span></div>
+                    <form onSubmit={(event) => {
+                      event.preventDefault();
+                      const text = String(new FormData(event.currentTarget).get("displayText"));
+                      void run(() => owner.updateRule({ ...commandInput(workspace), ruleId: rule.id, changes: { displayText: text } }), "Rule saved as a person-authored draft revision.");
+                    }}>
+                      <label htmlFor={`rule-${rule.id}`}>Rule wording</label>
+                      <textarea defaultValue={rule.displayText} id={`rule-${rule.id}`} key={`${profile.revision}-${rule.id}`} maxLength={500} name="displayText" required />
+                      <div className="rule-actions">
+                        <label className="check-row"><input checked={shared} onChange={(event) => void run(() => owner.setDisclosure({ ...commandInput(workspace), fieldKind: "rule", fieldId: rule.id, agentVisible: event.target.checked }), "Agent field access updated for the next invocation.")} type="checkbox" /> Agent can access</label>
+                        <button className="button secondary" disabled={busy} type="submit">Save rule</button>
+                      </div>
+                    </form>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="product-section" id="rehearsal-audit" aria-labelledby="audit-title">
+          <div className="section-heading"><div><p className="eyebrow">04 · Deterministic checks</p><h2 id="audit-title">Rehearsal Audit</h2></div><p>This audit evaluates protocol coverage and the communication partner—never the person.</p></div>
+          <div className="audit-summary">
+            <article><span className={conflicts.length ? "audit-fail" : "audit-pass"}>{conflicts.length ? "Needs review" : "Ready"}</span><h3>Active rule conflicts</h3><p>{conflicts.length ? `${conflicts.length} equal-strength conflict(s) found.` : "No equal-strength conflicts."}</p></article>
+            <article><span className={projection.sharedFieldCount ? "audit-pass" : "audit-fail"}>{projection.sharedFieldCount} shared</span><h3>Agent disclosure</h3><p>{projection.totalFieldCount - projection.sharedFieldCount} field(s) stay outside the active agent brief.</p></article>
+            <article><span className={scenario.status === "approved" ? "audit-pass" : "audit-fail"}>{scenario.status.replaceAll("_", " ")}</span><h3>Owner review</h3><p>An agent may start only after visible approval.</p></article>
+            <article><span className={report.needsHumanReview ? "audit-fail" : "audit-pass"}>{report.entries.length} evidence items</span><h3>Partner adherence</h3><p>{report.unresolvedSignalEventIds.length} signal(s) unresolved.</p></article>
+          </div>
+          {conflicts.length > 0 && <ul className="error-list">{conflicts.map((conflict) => <li key={conflict.id}>{conflict.reason.replaceAll("_", " ")}: {conflict.ruleIds.join(" and ")}</li>)}</ul>}
+          <details className="accessible-report"><summary>Accessible adherence report</summary><ul>{report.entries.map((item) => <li key={item.id}><strong>{item.category.replaceAll("_", " ")}:</strong> {item.label}. Evidence: {item.evidenceEventIds.join(", ") || "none"}.</li>)}</ul></details>
+        </section>
+
+        <section className="product-section guide-section" id="support-guide" aria-labelledby="guide-title">
+          <div className="section-heading"><div><p className="eyebrow">05 · Derived, then reviewed</p><h2 id="guide-title">Support Guide</h2></div><div className="guide-actions"><button className="button secondary" onClick={() => window.print()} type="button">Print guide</button>{guideIsDraft && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.ratify(commandInput(workspace)), "A new owner-controlled ratified version was created.")} type="button">Ratify visible draft</button>}</div></div>
+          <article className="support-guide" aria-label="Support guide preview">
+            {guideIsDraft && <div className="draft-watermark">Draft · visible owner review required</div>}
+            <h3>{profile.title}</h3>
+            <p className="guide-purpose">Communication difficulty is not inability to decide. Silence or delayed response is never agreement.</p>
+            <h4>What helps</h4>
+            {activeRules.length ? <ul>{activeRules.map((rule) => <li key={rule.id}>{rule.displayText}<small>Source: accepted rule {rule.id}</small></li>)}</ul> : <p>No active accepted rules yet.</p>}
+            <h4>My signals</h4>
+            <dl>{profile.signals.map((signal) => <div key={signal.id}><dt>{signal.label}</dt><dd>{signal.description} Partner action: {signal.expectedPartnerAction}</dd></div>)}</dl>
+            <blockquote>Ask me directly whenever possible. This guide explains how to communicate with me. It is not consent, a capacity assessment, an advance directive, or medical authorization.</blockquote>
+          </article>
+          <div className="derivation-check"><strong>Derivation preview</strong><span>{activeRules.length} guide statements map to {activeRules.length} accepted active source rules. {guideIsDraft ? "Draft watermark required." : `Verified against ratified version ${latestVersion?.ratifiedVersion}.`}</span></div>
+
+          <div className="patch-panel secondary-panel">
+            <h3>Staged protocol changes</h3>
+            {profile.rules.filter((rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.acceptedAt).length === 0 ? <p className="empty-state">No staged agent suggestions. If an agent proposes one after rehearsal, its exact before-and-after diff and provenance will appear here for per-item review.</p> : (
+              <ul>{profile.rules.filter((rule) => rule.provenance.source === "agent_suggestion" && !rule.provenance.acceptedAt).map((rule) => <li key={rule.id}><strong>Proposed:</strong> {rule.displayText}<span>Source session: {rule.provenance.sourceSessionId}</span><div><button type="button">Accept</button><button type="button">Reject</button><button type="button">Rewrite</button></div></li>)}</ul>
+            )}
+          </div>
+        </section>
+
+        <section className="product-section" id="history" aria-labelledby="history-title">
+          <div className="section-heading"><div><p className="eyebrow">06 · Local evidence</p><h2 id="history-title">History</h2></div><p>Older ratified versions are immutable and stay in this browser.</p></div>
+          {versions.length === 0 ? <p className="empty-state">No ratified version yet.</p> : (
+            <div aria-label="Scrollable ratified profile version table" className="table-wrap" role="region" tabIndex={0}><table><caption>Ratified profile versions</caption><thead><tr><th>Version</th><th>Profile revision</th><th>Reviewed</th><th>SHA-256</th></tr></thead><tbody>{versions.map((version) => <tr key={version.id}><td>{version.ratifiedVersion}</td><td>{version.revision}</td><td>{new Date(version.ratifiedAt).toLocaleString()}</td><td><code>{version.hash.slice(0, 12)}…</code></td></tr>)}</tbody></table></div>
+          )}
+          <div className="activity-panel secondary-panel">
+            <h3>Site tools and local activity</h3>
+            {receipts.length === 0 ? <p>No activity receipts yet.</p> : <ol>{receipts.slice(0, 12).map((receipt) => <li key={receipt.id}><strong>{receipt.toolName}</strong><span>{receipt.code} · profile r{receipt.profileRevision} · session v{receipt.sessionVersion}</span><small>{new Date(receipt.completedAt).toLocaleTimeString()} · changed IDs: {receipt.changedIds.join(", ") || "none"}</small></li>)}</ol>}
+            <p className="fine-print">Receipts contain tool names, timing, codes, revisions, and changed IDs—not profile or rehearsal prose.</p>
+          </div>
+        </section>
+
+        <section className="product-section" id="privacy" aria-labelledby="privacy-title">
+          <div className="section-heading"><div><p className="eyebrow">07 · Local-first, honestly described</p><h2 id="privacy-title">Privacy & accessibility</h2></div><p>No account, analytics, advertising, remote database, or hidden telemetry.</p></div>
+          <div className="privacy-grid">
+            <article><h3>What stays local</h3><p>Your profiles and rehearsals are stored in this browser’s local database. They are not encrypted.</p></article>
+            <article><h3>When Site tools run</h3><p>Only fields marked “Agent can access” may be returned to the active browser agent. Those returned fields are processed by that agent. Private notes are never available through Site tools.</p></article>
+            <article><h3>Product boundary</h3><p>This is communication practice, not a consent system, capacity assessment, advance directive, medical authorization, emergency plan, or legal instrument.</p></article>
+            <article><h3>Alpha evidence</h3><p>No diagnosis is required. This open alpha has not been clinically validated. Challenge data and personas are synthetic. Healthcare deployment requires future compensated co-design and governance work.</p></article>
+          </div>
+          <fieldset className="accessibility-settings">
+            <legend>Display and cognitive accessibility</legend>
+            <label>Text size<select onChange={(event) => setTextScale(Number(event.target.value) as 1 | 1.15 | 1.3)} value={textScale}><option value="1">Standard</option><option value="1.15">Large</option><option value="1.3">Extra large</option></select></label>
+            <label className="check-row"><input checked={highContrast} onChange={(event) => setHighContrast(event.target.checked)} type="checkbox" /> High contrast</label>
+            <label className="check-row"><input checked={reducedMotion} onChange={(event) => setReducedMotion(event.target.checked)} type="checkbox" /> Reduced motion</label>
+            <label className="check-row"><input checked={quietMode} onChange={(event) => setQuietMode(event.target.checked)} type="checkbox" /> Quiet mode (hide secondary panels)</label>
+            <label className="check-row"><input checked={plainLanguage} onChange={(event) => setPlainLanguage(event.target.checked)} type="checkbox" /> Plain language</label>
+          </fieldset>
+          <details><summary>Manual accessibility smoke-test checklist</summary><ul><li>Complete onboarding, editing, signals, rehearsal, import/export, and ratification by keyboard only.</li><li>Check Pause, Stop, errors, stale revisions, and new partner turns with a screen reader.</li><li>Verify 200% text size, 400% zoom/320px reflow, forced colors, reduced motion, and print.</li><li>Confirm every signal has text, no meaning relies on color, and focus stays visible.</li></ul></details>
+        </section>
+      </main>
+
+      <footer className="product-footer">
+        <span>How I Choose · Open alpha · No diagnosis required</span>
+        <span>v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.1.0"} · build {process.env.NEXT_PUBLIC_BUILD_COMMIT ?? "local"}</span>
+        <a href="https://github.com/tang-vu/how-i-choose">Public source</a>
+      </footer>
+    </div>
+  );
+}

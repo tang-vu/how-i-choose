@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AppShell } from "@/components/app-shell";
+import { WorkspaceApp } from "@/components/workspace-app";
 
 export const metadata: Metadata = {
   title: "Synthetic demo",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  return <AppShell demo />;
+  return <WorkspaceApp />;
 }

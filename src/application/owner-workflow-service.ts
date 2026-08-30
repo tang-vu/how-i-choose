@@ -12,6 +12,7 @@ import {
   type CommandDependencies,
 } from "@/application/command-bus";
 import { mayaProfile, mayaScenario, mayaSession } from "@/fixtures/maya";
+import { blankProfile, blankScenario, blankSession } from "@/fixtures/blank";
 
 const ExpectedVersionsSchema = z.object({
   expectedProfileRevision: z.number().int().nonnegative(),
@@ -33,6 +34,23 @@ const SelectSignalCommandSchema = ExpectedVersionsSchema.extend({
   signalId: StableIdSchema,
 }).strict();
 
+const SetDisclosureCommandSchema = ExpectedVersionsSchema.extend({
+  fieldKind: z.enum(["rule", "signal", "context", "scenario_summary"]),
+  fieldId: StableIdSchema,
+  agentVisible: z.boolean(),
+}).strict();
+
+const AddSignalCommandSchema = ExpectedVersionsSchema.extend({
+  label: z.string().trim().min(1).max(120),
+  description: z.string().trim().min(1).max(500),
+  expectedPartnerAction: z.string().trim().min(1).max(500),
+  agentVisible: z.boolean(),
+}).strict();
+
+const UpdateTitleCommandSchema = ExpectedVersionsSchema.extend({
+  title: z.string().trim().min(1).max(120),
+}).strict();
+
 export type WorkspaceIds = {
   profileId: string;
   sessionId: string;
@@ -47,23 +65,135 @@ export class OwnerWorkflowService {
   ) {}
 
   async resetSyntheticDemo(): Promise<void> {
-    const profile = structuredClone(mayaProfile);
+    await this.resetTemplate(
+      structuredClone(mayaProfile),
+      structuredClone(mayaScenario),
+      structuredClone(mayaSession),
+    );
+  }
+
+  async resetBlankProfile(): Promise<void> {
+    await this.resetTemplate(
+      structuredClone(blankProfile),
+      structuredClone(blankScenario),
+      structuredClone(blankSession),
+    );
+  }
+
+  private async resetTemplate(
+    profile: typeof mayaProfile,
+    scenario: typeof mayaScenario,
+    sessionTemplate: typeof mayaSession,
+  ): Promise<void> {
     const profileHash = await hashProfile(profile);
-    const session = { ...structuredClone(mayaSession), profileHash };
-    const profileVersion: ProfileVersionRecord = {
-      id: `${profile.id}:v${profile.ratifiedVersion ?? 1}`,
-      profileId: profile.id,
-      ratifiedVersion: profile.ratifiedVersion ?? 1,
-      revision: profile.revision,
-      hash: profileHash,
-      ratifiedAt: profile.reviewedAt ?? profile.updatedAt,
-      profile,
-    };
+    const session = { ...sessionTemplate, profileHash };
+    const profileVersion: ProfileVersionRecord | undefined = profile.ratifiedVersion
+      ? {
+          id: `${profile.id}:v${profile.ratifiedVersion}`,
+          profileId: profile.id,
+          ratifiedVersion: profile.ratifiedVersion,
+          revision: profile.revision,
+          hash: profileHash,
+          ratifiedAt: profile.reviewedAt ?? profile.updatedAt,
+          profile,
+        }
+      : undefined;
     await this.repository.resetWorkspace({
       profile,
       session,
-      scenario: structuredClone(mayaScenario),
+      scenario,
       profileVersion,
+    });
+  }
+
+  async updateProfileTitle(unchecked: z.input<typeof UpdateTitleCommandSchema>): Promise<CommandResult<{ profileId: string }>> {
+    const command = UpdateTitleCommandSchema.parse(unchecked);
+    return this.mutateProfile("owner_update_profile_title", command, (profile) => ({
+      ...profile,
+      title: command.title,
+    }), { profileId: this.ids.profileId });
+  }
+
+  async setDisclosure(unchecked: z.input<typeof SetDisclosureCommandSchema>): Promise<CommandResult<{ fieldId: string; agentVisible: boolean }>> {
+    const command = SetDisclosureCommandSchema.parse(unchecked);
+    return this.mutateProfile("owner_set_disclosure", command, (profile) => {
+      const index = profile.disclosures.findIndex(
+        ({ fieldKind, fieldId }) => fieldKind === command.fieldKind && fieldId === command.fieldId,
+      );
+      const disclosure = {
+        id: index >= 0 ? profile.disclosures[index]!.id : this.dependencies.id("disclosure"),
+        fieldKind: command.fieldKind,
+        fieldId: command.fieldId,
+        agentVisible: command.agentVisible,
+      };
+      return {
+        ...profile,
+        disclosures:
+          index >= 0
+            ? profile.disclosures.with(index, disclosure)
+            : [...profile.disclosures, disclosure],
+      };
+    }, { fieldId: command.fieldId, agentVisible: command.agentVisible });
+  }
+
+  async addCustomSignal(unchecked: z.input<typeof AddSignalCommandSchema>): Promise<CommandResult<{ signalId: string }>> {
+    const command = AddSignalCommandSchema.parse(unchecked);
+    const signalId = this.dependencies.id("signal-custom");
+    return this.mutateProfile("owner_add_custom_signal", command, (profile) => ({
+      ...profile,
+      signals: [...profile.signals, {
+        id: signalId,
+        semanticMeaning: "custom" as const,
+        label: command.label,
+        description: command.description,
+        expectedPartnerAction: command.expectedPartnerAction,
+        agentVisible: command.agentVisible,
+      }],
+      disclosures: command.agentVisible
+        ? [...profile.disclosures, {
+            id: this.dependencies.id("disclosure"),
+            fieldKind: "signal" as const,
+            fieldId: signalId,
+            agentVisible: true,
+          }]
+        : profile.disclosures,
+    }), { signalId });
+  }
+
+  private async mutateProfile<T extends object>(
+    scope: string,
+    command: z.infer<typeof ExpectedVersionsSchema>,
+    update: (profile: typeof mayaProfile) => typeof mayaProfile,
+    data: T,
+  ): Promise<CommandResult<T>> {
+    const request = await prepareAtomicRequest({
+      scope,
+      idempotencyKey: command.idempotencyKey,
+      ...this.ids,
+      expectedProfileRevision: command.expectedProfileRevision,
+      expectedSessionVersion: command.expectedSessionVersion,
+      source: "owner_ui",
+      toolName: scope,
+    }, command, this.dependencies);
+    return this.repository.runAtomicCommand<T>(request, ({ profile, session }) => {
+      const now = this.dependencies.now();
+      const nextProfile = {
+        ...update(profile),
+        revision: profile.revision + 1,
+        updatedAt: now,
+      };
+      return {
+        accepted: true,
+        profile: nextProfile,
+        session: {
+          ...session,
+          profileRevision: nextProfile.revision,
+          sessionVersion: session.sessionVersion + 1,
+        },
+        data,
+        changedIds: [profile.id, session.id, ...("fieldId" in data ? [String(data.fieldId)] : []), ...("signalId" in data ? [String(data.signalId)] : [])],
+        nextActions: ["review_profile", "get_rehearsal_brief"],
+      };
     });
   }
 
@@ -198,6 +328,70 @@ export class OwnerWorkflowService {
 
   async resume(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
     return this.changeSessionState("owner_resume", "owner_resume", input);
+  }
+
+  async submitScenarioForReview(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
+    return this.reviewScenario("owner_submit_scenario", "submit_scenario", input);
+  }
+
+  async approveScenario(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
+    return this.reviewScenario("owner_approve_scenario", "owner_approve_scenario", input);
+  }
+
+  private async reviewScenario(
+    scope: string,
+    action: "submit_scenario" | "owner_approve_scenario",
+    unchecked: z.input<typeof ExpectedVersionsSchema>,
+  ): Promise<CommandResult<{ state: string }>> {
+    const command = ExpectedVersionsSchema.parse(unchecked);
+    const request = await prepareAtomicRequest({
+      scope,
+      idempotencyKey: command.idempotencyKey,
+      ...this.ids,
+      expectedProfileRevision: command.expectedProfileRevision,
+      expectedSessionVersion: command.expectedSessionVersion,
+      source: "owner_ui",
+      toolName: scope,
+    }, command, this.dependencies);
+    return this.repository.runAtomicCommand<{ state: string }>(request, ({ session, scenario }) => {
+      const transition = transitionRehearsal(session.state, action);
+      if (!transition.ok) {
+        return {
+          accepted: false,
+          code: "TOOL_NOT_AVAILABLE_IN_STATE",
+          nextActions: [],
+          violations: [{ code: transition.code, message: "That review action is not available now." }],
+        };
+      }
+      const now = this.dependencies.now();
+      const eventId = this.dependencies.id("event");
+      return {
+        accepted: true,
+        scenario: {
+          ...scenario,
+          status: action === "submit_scenario" ? "awaiting_owner_review" : "approved",
+          approvedAt: action === "owner_approve_scenario" ? now : undefined,
+        },
+        session: {
+          ...session,
+          state: transition.state,
+          sessionVersion: session.sessionVersion + 1,
+          events: [...session.events, {
+            id: eventId,
+            sequence: session.events.length,
+            at: now,
+            actor: "owner",
+            type: "state_changed",
+            from: session.state,
+            to: transition.state,
+          }],
+        },
+        data: { state: transition.state },
+        changedIds: [scenario.id, session.id, eventId],
+        nextActions:
+          transition.state === "ready" ? ["start_human_rehearsal", "start_approved_rehearsal"] : ["approve_scenario_in_ui"],
+      };
+    });
   }
 
   async startHumanRehearsal(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {

@@ -20,7 +20,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M5 — Implement transactional repositories, immutable version history, safe import/export, owner/agent application services, idempotency, and hydrated projections.
   - Dependencies: M4.
   - Validation: fake IndexedDB and real Chromium persistence/migration tests; stale races, replay, rollback, and private projection tests.
-- [ ] M6 — Build the accessible standalone product: onboarding, My Signals, custom signals, What Helps, Practice Room, Audit, Support Guide, History, Privacy, human mode, responsive preferences, print, and demo reset.
+- [x] M6 — Build the accessible standalone product: onboarding, My Signals, custom signals, What Helps, Practice Room, Audit, Support Guide, History, Privacy, human mode, responsive preferences, print, and demo reset.
   - Dependencies: M5.
   - Validation: keyboard flows, narrow/wide viewports, forced colors, reduced motion, persistent Pause/Stop, axe major states, production build.
 - [ ] M7 — Add the top-level WebMCP stable tool catalog, runtime validation, fresh-state handlers, metadata receipts, visible availability, and all seven allowed tools.

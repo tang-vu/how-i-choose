@@ -80,7 +80,7 @@ export type RejectedMutation = {
 export type MutationOutcome<T> = AcceptedMutation<T> | RejectedMutation;
 
 export type ResetWorkspaceInput = WorkspaceSnapshot & {
-  profileVersion: ProfileVersionRecord;
+  profileVersion?: ProfileVersionRecord;
 };
 
 const RequestSchema = z.object({
@@ -170,7 +170,7 @@ export class WorkspaceRepository {
           this.db.profiles.add(profile),
           this.db.sessions.add(session),
           this.db.scenarios.add(scenario),
-          this.db.profileVersions.add(input.profileVersion),
+          ...(input.profileVersion ? [this.db.profileVersions.add(input.profileVersion)] : []),
         ]);
       },
     );

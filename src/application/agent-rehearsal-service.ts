@@ -30,6 +30,7 @@ export class AgentRehearsalService {
     private readonly repository: WorkspaceRepository,
     private readonly ids: WorkspaceIds,
     private readonly dependencies: CommandDependencies,
+    private readonly source: "webmcp" | "owner_ui" = "webmcp",
   ) {}
 
   async startApprovedRehearsal(
@@ -42,7 +43,7 @@ export class AgentRehearsalService {
       ...this.ids,
       expectedProfileRevision: command.expectedProfileRevision,
       expectedSessionVersion: command.expectedSessionVersion,
-      source: "webmcp",
+      source: this.source,
       toolName: "start_approved_rehearsal",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ state: string }>(request, ({ session, scenario }) => {
@@ -98,7 +99,7 @@ export class AgentRehearsalService {
       ...this.ids,
       expectedProfileRevision: command.expectedProfileRevision,
       expectedSessionVersion: command.expectedSessionVersion,
-      source: "webmcp",
+      source: this.source,
       toolName: "offer_partner_turn",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ eventId: string; visible: true }>(request, ({ profile, session }) => {

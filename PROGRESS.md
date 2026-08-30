@@ -164,3 +164,35 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (deployed footer still shows the last release commit until this milestone is pushed).
 
 Current next milestone: M6 — the complete accessible standalone product workflow.
+
+## M6 — Accessible standalone product workflow
+
+Work completed:
+
+- Replaced the scaffold demo with a complete local-first workspace spanning My Signals, Practice Room, What Helps, Rehearsal Audit, Support Guide, History, and Privacy.
+- Added owner-controlled onboarding, deterministic sample reset, blank-profile creation, title and rule editing, per-field agent exposure controls, custom signals, and explicit scenario review and approval.
+- Added a large semantic signal board, human-only and agent rehearsal modes, visible partner turns, persistent Pause and Stop controls, owner-only resume, and partner-turn blocking in paused or stopped states.
+- Added conflict, disclosure, readiness, partner-adherence, support-guide, provenance, activity receipt, and immutable profile-history views.
+- Added visible owner ratification, draft watermarks, the required support-guide boundary statement, client-side print, strict JSON import/export, and a copyable ChatGPT starter prompt.
+- Added user-controlled text size, high contrast, reduced motion, quiet mode, plain-language mode, skip navigation, status live regions, semantic landmarks, labeled controls, and responsive layouts.
+- Kept UI commands and future agent commands on the same application/domain service paths; transient presentation preferences remain outside persisted domain documents.
+
+Validation run:
+
+- `pnpm lint` passed.
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 6 files, 48 tests.
+- `pnpm test:e2e` passed: 20 tests across desktop and narrow Chromium.
+- Product E2E covers owner-controlled onboarding, local profile persistence, human-only validated turns, semantic signals, Pause/Resume/Stop enforcement, blank-profile scenario review, JSON export/import, and accessibility preferences.
+- Axe reported zero serious or critical findings on `/` and the populated `/demo/` workspace in desktop and narrow viewports.
+- `pnpm build` passed with static `/`, `/demo`, and 404 output.
+
+Remaining risks:
+
+- A manual screen-reader smoke test, forced-colors inspection, 400% reflow inspection, and full keyboard checklist remain release gates; automated keyboard-visible controls and narrow viewport coverage are green.
+- Staged protocol-patch review is visible but has no agent-created patch until the WebMCP tool is implemented in M7.
+- Support-guide derivation verification and real ChatGPT Site tools discovery remain for M7–M10.
+
+Verified deployment URL: https://how-i-choose.vercel.app (production will be updated to this milestone commit after push).
+
+Current next milestone: M7 — the top-level WebMCP adapter, strict tool contracts, handlers, receipts, and availability state.
