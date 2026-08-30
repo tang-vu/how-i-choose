@@ -17,7 +17,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: install, lint, typecheck, unit smoke, E2E smoke, static build, direct `/demo` route, HTTPS preview.
 - [x] M4 — Implement schemas, pure rehearsal state machine, canonicalization/hash, policy/conflict/turn/report engines, and fixtures.
   - Validation: table and fast-check properties cover determinism, rule ordering, conflicts, signals, stop/pause, revisions, and hashes.
-- [ ] M5 — Implement transactional repositories, immutable version history, safe import/export, owner/agent application services, idempotency, and hydrated projections.
+- [x] M5 — Implement transactional repositories, immutable version history, safe import/export, owner/agent application services, idempotency, and hydrated projections.
   - Dependencies: M4.
   - Validation: fake IndexedDB and real Chromium persistence/migration tests; stale races, replay, rollback, and private projection tests.
 - [ ] M6 — Build the accessible standalone product: onboarding, My Signals, custom signals, What Helps, Practice Room, Audit, Support Guide, History, Privacy, human mode, responsive preferences, print, and demo reset.

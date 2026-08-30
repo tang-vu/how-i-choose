@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import { canonicalStringify, hashProfile, ratifyProfile } from "@/domain/canonicalize";
 import { findActiveRuleConflicts } from "@/domain/conflict-engine";
+import { buildAgentProfileProjection } from "@/domain/provenance";
 import {
   CommunicationProfileSchema,
   activeRulesForContext,
   type CommunicationRule,
 } from "@/domain/profile";
 import { StructuredPartnerTurnSchema } from "@/domain/rehearsal";
-import { mayaProfile, validMayaTurn } from "@/fixtures/maya";
+import { mayaProfile, mayaScenario, mayaSession, validMayaTurn } from "@/fixtures/maya";
 
 describe("communication profile", () => {
   it("validates the synthetic Maya profile", () => {
@@ -29,6 +30,23 @@ describe("communication profile", () => {
     expect(
       StructuredPartnerTurnSchema.safeParse({ ...validMayaTurn, onRender: "run-code" }).success,
     ).toBe(false);
+  });
+
+  it("builds a deny-by-default agent projection without private notes", () => {
+    const hidden = structuredClone(mayaProfile);
+    hidden.disclosures = hidden.disclosures.map((disclosure) => ({
+      ...disclosure,
+      agentVisible: disclosure.fieldId !== "rule-silence",
+    }));
+    const projection = buildAgentProfileProjection(hidden, mayaSession, mayaScenario);
+    const serialized = JSON.stringify(projection);
+
+    expect(projection.rules.map(({ id }) => id)).not.toContain("rule-silence");
+    expect(projection.signals).toHaveLength(8);
+    expect(serialized).not.toContain(hidden.privateNotes);
+    expect(serialized).not.toContain("privateNotes");
+    expect(projection.sharedFieldCount).toBe(19);
+    expect(projection.totalFieldCount).toBe(20);
   });
 
   it("filters draft and retired rules from active evaluation", () => {

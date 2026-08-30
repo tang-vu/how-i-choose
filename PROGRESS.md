@@ -133,3 +133,34 @@ Remaining risks:
 Verified deployment URL: https://how-i-choose.vercel.app (still deployed at scaffold commit `e2e8aab` until this milestone is pushed and redeployed).
 
 Current next milestone: M5 — revision-safe persistence, history, and shared application services.
+
+## M5 — Revision-safe persistence, history, and application services
+
+Work completed:
+
+- Added Dexie tables for profiles, sessions, scenarios, immutable profile versions, metadata-only activity receipts, and command idempotency records.
+- Added one repository transaction boundary that rechecks profile/session revisions, resolves idempotency, validates every next document, commits all related writes together, and records sanitized success/failure receipts.
+- Added deterministic command fingerprinting before transactions so Web Crypto promises do not escape Dexie transaction lifetimes.
+- Added safe, size-bounded, strict JSON import/export that validates the complete document before replacing local records.
+- Added a separate durable app projection store and transient-only UI preference store.
+- Added structurally separate `OwnerWorkflowService` and `AgentRehearsalService`; the agent-safe service has no ratify, resume, import/export, share, or delete capability.
+- Added owner rule editing, person-selected semantic signals, owner resume/start, visible ratification with immutable snapshots, approved agent start, and validated partner-turn persistence through the same repository and domain logic.
+- Added deny-by-default allowlisted agent projections. Disclosures and entity visibility must both allow a field; private notes are not present in the projection type or serialized result.
+
+Validation run:
+
+- `pnpm typecheck` passed.
+- `pnpm test` passed: 6 files, 48 tests.
+- Tests cover atomic profile/session updates, stale profile and session rejection, same-payload replay, changed-payload key rejection, rollback after invalid next state, exact owner-authored signals, invalid/valid partner-turn persistence, immutable ratified history, canonical import/export round trip, pre-mutation import rejection, database close/reload, metadata-only receipts, and private-field noninterference.
+- `pnpm lint` will run with the final milestone diff immediately before commit.
+- E2E and build were not required for this persistence/application milestone; UI integration follows in M6.
+
+Remaining risks:
+
+- UI integration must refresh hydrated projections after every command and provide visible correlation/recovery messaging.
+- Only schema version 1 exists, so migration infrastructure is present through Dexie versioning but an old-version migration fixture cannot yet be meaningful.
+- Tool read receipts, complete brief/audit/report/patch/guide services, and WebMCP contracts remain for M7.
+
+Verified deployment URL: https://how-i-choose.vercel.app (deployed footer still shows the last release commit until this milestone is pushed).
+
+Current next milestone: M6 — the complete accessible standalone product workflow.
