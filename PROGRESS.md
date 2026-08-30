@@ -314,6 +314,8 @@ Work completed:
 - Verified local IndexedDB interaction continues after loaded static assets lose network access: start, valid partner turn, person-selected more-time signal, and explicit human acknowledgment all complete offline.
 - Investigated the M9 GitHub Actions failure instead of treating local parallel results as sufficient. Linux Chromium exposed 9 pixels of narrow-header overflow and two retry races.
 - Fixed the 320px header to wrap its Site-tools status, made the channel editor unavailable during an in-flight owner command, and made onboarding/reset waits deterministic. A CI-mode, one-worker rerun passed all 24 affected desktop/narrow tests without retries.
+- The next remote run isolated a final 5-pixel CI-only overflow: GitHub injected its full 40-character SHA while local/production used the intended short label. Build metadata now normalizes every provider SHA to 12 characters, matching the verified production footer and preventing the unbreakable CI-only string.
+- Reproduced the release in the matching Playwright Linux container with a full 40-character `GITHUB_SHA`; both 320px viewport projects pass after normalization. The complete one-worker local CI simulation also passes all 34 tests with that full environment value.
 - Confirmed GitHub repository visibility, MIT detection, description, homepage, default branch, and remote ownership.
 - Recorded the exact external ChatGPT blocker: no eligible built-in-browser client/model session is available in this execution environment. Standard Chromium correctly reports Site tools unavailable; real ChatGPT discovery and the real-agent path remain unverified.
 

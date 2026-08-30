@@ -65,10 +65,21 @@ test("320 CSS pixel reflow keeps the page and persistent actions reachable", asy
   await openWorkspace(page);
   await page.getByRole("button", { name: "Start human rehearsal" }).click();
 
-  const horizontalOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+  const reflow = await page.evaluate(() => ({
+    horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    offenders: [...document.querySelectorAll<HTMLElement>("body *")]
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          element: `${element.tagName.toLowerCase()}${element.id ? `#${element.id}` : ""}${element.className ? `.${String(element.className).split(" ").join(".")}` : ""}`,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+        };
+      })
+      .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1),
+  }));
+  expect(reflow.horizontalOverflow, JSON.stringify(reflow.offenders)).toBeLessThanOrEqual(1);
   await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true }).first()).toBeVisible();
 });
