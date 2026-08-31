@@ -34,11 +34,12 @@ pnpm start:static
 pnpm audit:prod
 pnpm audit:secrets
 pnpm capture:preview
+pnpm smoke:a11y-assisted
 pnpm smoke:prod
 pnpm deploy
 ```
 
-`pnpm capture:preview` refreshes the synthetic public screenshot from the deployed demo. `pnpm deploy` targets the configured free HTTPS host and embeds the current Git SHA in the build footer. Never purchase a plan or domain. The deploy command must not be used without authenticated hosting access.
+`pnpm capture:preview` refreshes the synthetic public screenshot from the deployed demo. On Windows, `pnpm smoke:a11y-assisted [url] [temporary-artifact-directory]` drives installed Chrome through real 400% browser zoom, captures OS-window evidence, and exercises the critical keyboard/screen-reader states; run it with NVDA active when collecting real assistive-technology output. `pnpm deploy` targets the configured free HTTPS host and embeds the current Git SHA in the build footer. Never purchase a plan or domain. The deploy command must not be used without authenticated hosting access.
 
 ## Architectural boundaries
 

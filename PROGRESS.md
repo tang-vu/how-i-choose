@@ -449,3 +449,39 @@ Remaining risks and manual actions:
 Verified deployment URL: https://how-i-choose.vercel.app (implementation build `e59970a92265`).
 
 Current next action: push this documentation closeout, deploy its exact docs-only SHA for footer parity, then leave only the human assistive-technology, authorized video, Devpost submission, and post-submission tag actions.
+
+## M14 — Real NVDA and 400% Chrome accessibility evidence
+
+Work completed:
+
+- Downloaded the official current NVDA 2026.2 release from NV Access, verified its published SHA-256 (`f3f8d29974a88d687b3c4809be192219ec579c5bdabcda5aaf53635288bca824`) and valid `NV Access Limited` Authenticode signature, and created a temporary portable copy without changing the user's startup configuration.
+- Ran installed Chrome 151.0.7922.175 with the real NVDA process against the release candidate. Reviewed actual NVDA speech output rather than substituting a DOM or mocked accessibility-tree result.
+- Added `pnpm smoke:a11y-assisted`, a repeatable Windows harness that applies actual Chrome zoom keyboard commands, measures the 400% scale, captures the real OS window, checks page/action/text clipping, exercises critical owner states, and sends real NVDA heading/table quick-navigation keys.
+- Confirmed NVDA announced the title, named main landmark, focused page heading, Start, the complete Amber label/meaning/partner action, signal recording, Pause/Resume, terminal Stop, Agent rehearsal access notice, Support Guide heading, and the captioned 2-row/4-column history table.
+- The first NVDA pass showed that focusing the `main` skip target caused the entire workspace to be announced. Changed the skip target to the focusable page heading while retaining a named main landmark; the final speech log announced only the landmark, region, and level-one heading.
+- The first 400% visual pass showed the primary navigation depended on contained horizontal scrolling. Changed landing and product navigation to a two-column wrap below 420 CSS pixels, eliminating horizontal navigation scroll while keeping every destination visible and keyboard reachable.
+- Measured Chrome zoom at exactly 400% (`innerWidth` 1424 to 356, device-pixel ratio 1 to 4). Landing, ready, active, paused, stopped, and Support Guide states had zero page horizontal overflow, clipped actions, or clipped text. OS-window captures were visually reviewed; temporary raw screenshots/logs were not added to source control.
+- Kept evidence boundaries explicit: this is a real assistive-technology engineering smoke, not a claim that a human screen-reader user listened to, endorsed, or validated the experience.
+
+Validation run:
+
+- Targeted `pnpm lint` and `pnpm typecheck` passed during implementation.
+- Targeted Playwright for skip-link keyboard behavior and 320 CSS-pixel reflow passed: 4 tests across desktop and narrow Chromium.
+- The final exact-source assisted smoke passed against the static build with Chrome 151.0.7922.175 and NVDA 2026.2; actual `h` and `t` NVDA input events and their heading/table speech output were present in the log.
+- `pnpm lint` and strict `pnpm typecheck` passed.
+- `pnpm test` passed all 76 unit, property, application, persistence, and WebMCP tests.
+- `pnpm test:coverage` passed: 89.59% statements, 75.48% branches, 88.97% functions, and 90.80% lines.
+- `pnpm build` passed and emitted static `/`, `/_not-found`, and `/demo` routes.
+- CI-mode `pnpm test:e2e` passed all 36 desktop/narrow Chromium tests with one worker and no retries, including axe, forced colors, reduced motion, print, the complete judge path, the concise skip target, and navigation reflow.
+- Production dependency audit found no known vulnerabilities; peer dependency checks passed; secret scanning passed across all 101 release files.
+- Deployment, production smoke, CI, and remote-parity checks follow after the atomic milestone commit is pushed.
+
+Remaining risks and manual actions:
+
+- Human auditory/usability review by a screen-reader user remains unverified. The release does not convert agent-operated evidence into a human endorsement or WCAG conformance claim.
+- VoiceOver + Safari remains future cross-platform validation.
+- Video recording/publication and Devpost submission still require explicit owner authorization. The release tag remains deferred until submission is confirmed.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently the pre-M14 build; the exact M14 SHA will replace it after push).
+
+Current next action: run the full release gates, commit and push M14, deploy its exact SHA, verify production/CI/remote parity, and leave only the explicitly human/authorized release actions.

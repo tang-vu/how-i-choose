@@ -40,6 +40,8 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 
 - [x] M13 — Raise judge-facing product clarity and visual distinction without weakening owner authority or accessibility.
   - Validation: every landing action reaches a real workflow; the executable protocol and authority boundary are visible at a glance; refreshed desktop/narrow layouts have no horizontal overflow; default, high-contrast, reduced-motion, and forced-colors states pass axe with no serious or critical findings; the refreshed synthetic preview is visually inspected.
+- [x] M14 — Run real NVDA and 400% Chrome smoke checks, repair findings, and preserve honest release evidence.
+  - Validation: signed official NVDA 2026.2 runs with Chrome 151.0.7922.175; speech output confirms the critical semantic path; actual zoom measures 400%; OS-window captures and geometry checks cover landing, ready, active, paused, stopped, and Support Guide states; primary navigation has no horizontal scroll at 320 CSS pixels; human auditory review remains separately unclaimed.
 
 ## Required validation gates
 

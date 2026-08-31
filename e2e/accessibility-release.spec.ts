@@ -18,7 +18,7 @@ test("essential owner controls support keyboard activation and a working skip li
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.locator("#workspace-main")).toBeFocused();
+  await expect(page.locator("#workspace-title")).toBeFocused();
 
   const continueButton = page.getByRole("button", { name: "Continue with current local data" });
   await continueButton.focus();
@@ -65,11 +65,19 @@ test("forced colors and reduced motion retain semantics without blocking axe", a
 
 test("320 CSS pixel reflow keeps the page and persistent actions reachable", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 760 });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const landingNavigationOverflow = await page.locator(".primary-nav").evaluate(
+    (navigation) => navigation.scrollWidth - navigation.clientWidth,
+  );
+  expect(landingNavigationOverflow, "Landing navigation should wrap instead of requiring horizontal scrolling").toBeLessThanOrEqual(1);
+
   await openWorkspace(page);
   await page.getByRole("button", { name: "Start human rehearsal" }).click();
 
   const reflow = await page.evaluate(() => ({
     horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    navigationOverflow: document.querySelector(".product-nav")!.scrollWidth - document.querySelector(".product-nav")!.clientWidth,
     offenders: [...document.querySelectorAll<HTMLElement>("body *")]
       .map((element) => {
         const rect = element.getBoundingClientRect();
@@ -83,6 +91,7 @@ test("320 CSS pixel reflow keeps the page and persistent actions reachable", asy
       .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1),
   }));
   expect(reflow.horizontalOverflow, JSON.stringify(reflow.offenders)).toBeLessThanOrEqual(1);
+  expect(reflow.navigationOverflow, "Primary navigation should wrap instead of requiring horizontal scrolling").toBeLessThanOrEqual(1);
   await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop", exact: true }).first()).toBeVisible();
 });

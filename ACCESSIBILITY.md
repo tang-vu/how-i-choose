@@ -25,6 +25,14 @@ pnpm test:e2e
 
 The suite checks axe at the landing page, workspace, stopped state, and reviewed/ratified state in desktop and narrow Chromium. It fails on serious or critical findings. It also exercises accessibility preferences. A zero-finding result is not a complete WCAG audit.
 
+On Windows, an assisted real-browser/assistive-technology smoke can also be run with NVDA already active:
+
+```bash
+pnpm smoke:a11y-assisted https://how-i-choose.vercel.app <temporary-artifact-directory>
+```
+
+The harness uses installed Chrome, applies actual browser zoom keys, proves the resulting 400% scale from `innerWidth` and device-pixel ratio, checks page/action/text clipping across critical states, captures the real OS window, and sends NVDA heading/table quick-navigation keys. Artifacts and raw NVDA logs belong in a temporary directory, not the repository, because assistive-technology logs can include unrelated desktop context.
+
 ## Manual keyboard checklist
 
 - [ ] Start at the address bar and reach `Skip to main content` with Tab.
@@ -56,7 +64,7 @@ Repeat with at least NVDA + current Chrome on Windows; add VoiceOver + Safari be
 ## Display and cognition checklist
 
 - [ ] At 320 CSS pixels wide, there is no two-dimensional page scrolling and all actions remain reachable.
-- [ ] At 400% browser zoom, content reflows without clipping, overlap, or lost controls.
+- [x] At 400% browser zoom, content reflows without clipping, overlap, or lost controls. Verified 2026-08-31 with installed Chrome 151.0.7922.175 at measured 400% across landing, ready, active, paused, stopped, and Support Guide states.
 - [ ] At 200% text-only zoom, text is not clipped and controls grow or wrap.
 - [ ] Windows High Contrast/forced-colors preserves focus, boundaries, selected state, and signal labels.
 - [ ] Reduced motion removes non-essential transitions without hiding state changes.
@@ -66,4 +74,8 @@ Repeat with at least NVDA + current Chrome on Windows; add VoiceOver + Safari be
 
 ## Release record
 
-Automated Chromium/axe coverage is part of CI. Manual keyboard, screen-reader, 400% reflow, and real assistive-technology results must be dated in [JUDGE_CHECKLIST.md](JUDGE_CHECKLIST.md). An unchecked item means unverified, not failed.
+Automated Chromium/axe coverage is part of CI. On 2026-08-31, a Codex-operated run used the real NVDA 2026.2 process and installed Chrome 151.0.7922.175 against the release candidate. The reviewed NVDA speech-output log confirmed the page title, named main landmark, focused page heading from the skip link, signal label/meaning/partner action, live state changes, terminal Stop alert, Agent rehearsal disclosure, Support Guide heading, and a captioned 2-by-4 history table. The same run measured actual browser zoom at exactly 400% and visually reviewed OS-window captures with no page overflow, clipped text, clipped action, or horizontally scrolling primary navigation.
+
+This is real software output and repeatable engineering evidence, but Codex is not a human screen-reader user. A human auditory/usability review remains separately unverified and must not be inferred from this record. Comprehensive manual keyboard, screen-reader, forced-colors, and print results must be dated in [JUDGE_CHECKLIST.md](JUDGE_CHECKLIST.md). An unchecked item means unverified, not failed.
+
+Version and operating guidance came from the official [NVDA 2026.2 release](https://www.nvaccess.org/post/nvda-2026-2/) and [NVDA User Guide](https://download.nvaccess.org/documentation/en/userGuide.html).

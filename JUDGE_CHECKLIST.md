@@ -59,26 +59,27 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] ESLint passes.
 - [x] Strict TypeScript passes.
 - [x] Unit, service, property, import/export, and agent-flow eval tests pass.
-- [x] Coverage gate passes: 76 tests, 89.56% statements, 75.56% branches, 88.93% functions, and 90.78% lines.
+- [x] Coverage gate passes: 76 tests, 89.59% statements, 75.48% branches, 88.97% functions, and 90.80% lines.
 - [x] WebMCP contract tests invoke all handlers without UI and verify registration once.
 - [x] Playwright desktop and narrow suites pass.
 - [x] Complete 15-step judge path passes in both projects.
 - [x] Axe reports no serious or critical findings in tested major states.
 - [x] Static production build passes.
 - [x] Production dependency audit passes: no known vulnerabilities.
-- [x] Secret-pattern scan passes for the release candidate: 100 tracked/untracked release files.
+- [x] Secret-pattern scan passes for the release candidate: 101 tracked/untracked release files.
 - [x] GitHub Actions passes for the final commit at handoff.
 
 ## Manual accessibility release record
 
 - [ ] Keyboard-only checklist completed — date/tester/browser: unverified.
-- [ ] NVDA + Chrome smoke test completed — date/tester/versions: unverified.
-- [ ] 400% zoom/reflow check completed — date/tester/browser: unverified.
+- [x] Real NVDA + Chrome assisted smoke completed — 2026-08-31, Codex-operated and speech-output log reviewed, NVDA 2026.2 + Chrome 151.0.7922.175.
+- [ ] Human auditory/usability review by a screen-reader user — date/tester/versions: unverified.
+- [x] 400% zoom/reflow check completed — 2026-08-31, Codex-operated actual Chrome zoom and OS-window visual review, Chrome 151.0.7922.175.
 - [ ] Windows forced-colors check completed — date/tester/browser: unverified.
 - [ ] Reduced-motion check completed — date/tester/browser: unverified.
 - [ ] Print/PDF support-guide check completed — date/tester/browser: unverified.
 
-See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. Automated keyboard/viewport/media-mode coverage may support these checks but does not mark human assistive-technology items complete.
+See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. The checked NVDA item records a real assistive-technology process and reviewed speech output; it does not claim that a human screen-reader user listened to or endorsed the experience.
 
 ## Deployment and browser record
 
@@ -92,7 +93,7 @@ See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. Automated keyboard
 - [x] Real tools exercised readiness, stale recovery, idempotency, invalid-turn repair, semantic signal acknowledgment, Pause, Stop, reporting, guide verification, and draft-only patch staging — owner-run 2026-08-31.
 - [x] Production build `236b6c4d9b87` rechecked in real ChatGPT: Human-only blocked brief/start with `AGENT_ACCESS_DISABLED` and no changed IDs; visible Agent rehearsal then enabled the 20/20 scoped brief at session v2 — owner-run 2026-08-31.
 
-Evidence record: the owner opened the deployed synthetic demo in ChatGPT's built-in browser on 2026-08-31 and reported eight discovered tools with no application console errors. The first run confirmed readiness, revision/idempotency guards, deterministic rejection and repair, Blue/more-time acknowledgment, Pause/Stop enforcement, partner-only reporting, derived guide content, and staged-only protocol changes. The owner deliberately left the patch pending review and did not accept or ratify it. That run also found that build `d9985080b5ab` treated Human-only as display state rather than authorization. After the fix, the owner tested build `236b6c4d9b87`: reset was Human-only `ready · v1`; `get_rehearsal_brief` and `start_approved_rehearsal` returned `AGENT_ACCESS_DISABLED`, with no changed IDs from start; visible Agent rehearsal enabled access; the next brief returned `OK`, 20/20 shared fields, valid next actions, and `ready · v2`; no application console errors appeared. ChatGPT client/model details were not provided. Human NVDA/screen-reader evidence remains unverified.
+Evidence record: the owner opened the deployed synthetic demo in ChatGPT's built-in browser on 2026-08-31 and reported eight discovered tools with no application console errors. The first run confirmed readiness, revision/idempotency guards, deterministic rejection and repair, Blue/more-time acknowledgment, Pause/Stop enforcement, partner-only reporting, derived guide content, and staged-only protocol changes. The owner deliberately left the patch pending review and did not accept or ratify it. That run also found that build `d9985080b5ab` treated Human-only as display state rather than authorization. After the fix, the owner tested build `236b6c4d9b87`: reset was Human-only `ready · v1`; `get_rehearsal_brief` and `start_approved_rehearsal` returned `AGENT_ACCESS_DISABLED`, with no changed IDs from start; visible Agent rehearsal enabled access; the next brief returned `OK`, 20/20 shared fields, valid next actions, and `ready · v2`; no application console errors appeared. ChatGPT client/model details were not provided. Real NVDA software output and 400% Chrome reflow are now engineering-verified; human auditory screen-reader usability remains unverified.
 
 ## Content and safety review
 

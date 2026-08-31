@@ -92,3 +92,7 @@ Human-only must mean that the active browser agent cannot read or mutate the reh
 ## D-021 — Make the authority model the visual signature
 
 Use the same signal shapes, editorial typography, numbered protocol flow, and deep-blue authority panels across the landing page and Practice Room. The memorable moment is not decorative AI imagery; it is seeing a proposed turn beside an explicit `MAY`/`NEVER` boundary while the person-controlled signal system remains visually primary. Generic dashboard cards, animation-heavy spectacle, external fonts, and bitmap hero art were rejected because they would weaken product comprehension, runtime independence, or accessibility. Judge-facing proof points stay literal: eight scoped Site tools, zero agent authority over signals, zero server data stores, and one human source of truth.
+
+## D-022 — Separate real assistive-technology output from human endorsement
+
+Use the signed official portable NVDA release with installed Chrome to collect repeatable speech-output evidence, and use actual browser zoom keys plus OS-window captures for 400% reflow. Record the exact versions, states, and observed announcements. A real NVDA process is stronger evidence than a mocked accessibility tree, but an AI-operated log review is not a human auditory/usability review. Conflating those claims was rejected; the release checklist keeps human screen-reader-user evaluation as a separate unchecked item.

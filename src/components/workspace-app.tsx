@@ -283,7 +283,7 @@ export function WorkspaceApp() {
       data-reduced-motion={reducedMotion}
       style={{ "--user-text-scale": textScale } as React.CSSProperties}
     >
-      <a className="skip-link" href="#workspace-main">Skip to main content</a>
+      <a className="skip-link" href="#workspace-title">Skip to main content</a>
       <div className="live-region" aria-live="polite" aria-atomic="true">{notice}</div>
 
       <header className="product-header">
@@ -367,12 +367,12 @@ export function WorkspaceApp() {
         </section>
       )}
 
-      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+      <main id="workspace-main" className="workspace-main" aria-label="Communication rehearsal workspace">
         <section className="workspace-intro" aria-labelledby="workspace-title">
           <div className="workspace-title-grid">
             <div>
               <p className="eyebrow">{profile.title.includes("Maya") ? "Synthetic sample profile" : "Self-authored profile"}</p>
-              <h1 id="workspace-title">{profile.title}</h1>
+              <h1 id="workspace-title" tabIndex={-1}>{profile.title}</h1>
             </div>
             <div className="workspace-promise">
               <span aria-hidden="true" className="promise-mark">↳</span>
