@@ -413,3 +413,36 @@ Remaining risks and manual actions:
 Verified deployment URL: https://how-i-choose.vercel.app
 
 Current next action: complete any desired human assistive-technology checks, then explicitly authorize video publication and Devpost submission when ready. No agent-controlled implementation, deployment, automated validation, or real-WebMCP verification task remains open.
+
+## M13 — Judge-facing product clarity and visual distinction
+
+Work completed:
+
+- Re-audited the public landing page and synthetic Practice Room at desktop and mobile sizes against the official challenge's equally weighted WebMCP leverage, execution, potential-impact, and creativity/ambition criteria.
+- Replaced inert landing navigation with links to the corresponding real workspace sections and changed `Create a blank profile` from a showcase scroll into a real direct-start blank local workflow.
+- Added a person-centered signal orbit, literal proof strip, and four-step executable-protocol story so the product inversion and WebMCP role are understandable in the first screen.
+- Added a dynamic Define/Approve/Rehearse/Reflect rail to the workspace and reinforced the signal board with text-plus-shape semantics.
+- Reframed the Practice Room around a visible protocol-checked partner turn, current rehearsal protections, a scoped `MAY`/`NEVER` agent authority boundary, and the one-paste ChatGPT demo prompt.
+- Refreshed and visually inspected `public/product-preview.png`; no real person or private information is present.
+- Extended regression coverage for the direct-start CTA, real navigation, narrow landing reflow, and the refreshed Agent rehearsal state under forced colors.
+- The first full E2E run exposed insufficient forced-colors contrast in the new protection strip. The palette override and selector specificity were corrected, the Agent boundary was added to the forced-colors axe state, and the complete suite was rerun rather than skipped.
+
+Validation run:
+
+- Desktop and mobile landing screenshots and the refreshed Practice Room preview were visually inspected; temporary audit captures were removed after review.
+- `pnpm lint` and `pnpm typecheck` passed.
+- `pnpm test` passed: 8 files and 76 tests.
+- `pnpm build` passed with static `/`, `/_not-found`, and `/demo` routes.
+- CI-mode `pnpm test:e2e` passed all 36 desktop/narrow Chromium tests with one worker and no retries after the accessibility repair. The suite includes the complete judge path, landing CTA/navigation/reflow, Agent rehearsal forced-colors/reduced-motion axe checks, print, keyboard, persistence, and WebMCP registration.
+- Axe reported zero serious or critical findings in all tested release states.
+- Production dependency audit found no known vulnerabilities; peer dependency checks passed; secret scanning passed across all 100 release files.
+
+Remaining risks and manual actions:
+
+- Human screen-reader and 400% zoom checks remain unverified; automated keyboard, 320 CSS-pixel reflow, forced-colors, reduced-motion, and axe evidence is green.
+- The refreshed exact SHA still needs to be pushed, deployed, and production-smoke-tested.
+- Video recording/publication and Devpost submission still require explicit owner authorization. The release tag remains deferred until submission is confirmed.
+
+Verified deployment URL: https://how-i-choose.vercel.app (the previous verified build remains live until this milestone is pushed and deployed).
+
+Current next action: inspect the final diff, commit and push the green M13 milestone, deploy that exact SHA, run production smoke, and verify remote/deployment parity.

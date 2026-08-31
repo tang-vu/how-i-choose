@@ -88,3 +88,7 @@ Keep the configured global coverage thresholds and add tests for uncovered safet
 ## D-020 — Treat practice mode as durable authorization
 
 Human-only must mean that the active browser agent cannot read or mutate the rehearsal, not merely that the page renders a different form. Store the owner-controlled `agentAccessEnabled` flag on the revisioned rehearsal session, default and migrate it to false, and make all WebMCP queries fail closed. Mutating services recheck the flag inside the atomic transaction so a UI race cannot authorize a stale call. Keeping mode in React component state or merely renaming the label was rejected because neither enforces the user's stated boundary.
+
+## D-021 — Make the authority model the visual signature
+
+Use the same signal shapes, editorial typography, numbered protocol flow, and deep-blue authority panels across the landing page and Practice Room. The memorable moment is not decorative AI imagery; it is seeing a proposed turn beside an explicit `MAY`/`NEVER` boundary while the person-controlled signal system remains visually primary. Generic dashboard cards, animation-heavy spectacle, external fonts, and bitmap hero art were rejected because they would weaken product comprehension, runtime independence, or accessibility. Judge-facing proof points stay literal: eight scoped Site tools, zero agent authority over signals, zero server data stores, and one human source of truth.

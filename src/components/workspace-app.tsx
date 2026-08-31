@@ -137,11 +137,16 @@ export function WorkspaceApp() {
   useEffect(() => {
     const initialize = async () => {
       await appStore.getState().hydrate(repository, workspaceIds);
-      if (!appStore.getState().workspace) {
+      const blankRequested = new URLSearchParams(window.location.search).get("start") === "blank";
+      if (blankRequested) {
+        await owner.resetBlankProfile();
+        localStorage.setItem("how-i-choose-onboarded", "yes");
+        window.history.replaceState(null, "", `${window.location.pathname}#my-signals`);
+      } else if (!appStore.getState().workspace) {
         await owner.resetSyntheticDemo();
       }
       await refresh();
-      setOnboarding(localStorage.getItem("how-i-choose-onboarded") !== "yes");
+      setOnboarding(!blankRequested && localStorage.getItem("how-i-choose-onboarded") !== "yes");
       setCurrentTime(Date.now());
       setNotice("Your local workspace is ready.");
     };
@@ -364,10 +369,16 @@ export function WorkspaceApp() {
 
       <main id="workspace-main" className="workspace-main" tabIndex={-1}>
         <section className="workspace-intro" aria-labelledby="workspace-title">
-          <div>
-            <p className="eyebrow">{profile.title.includes("Maya") ? "Synthetic sample profile" : "Self-authored profile"}</p>
-            <h1 id="workspace-title">{profile.title}</h1>
-            <p>{plainLanguage ? "Choose how people ask, wait, and respond to your signals." : "A local-first workspace for defining, rehearsing, and documenting how a communication partner should adapt."}</p>
+          <div className="workspace-title-grid">
+            <div>
+              <p className="eyebrow">{profile.title.includes("Maya") ? "Synthetic sample profile" : "Self-authored profile"}</p>
+              <h1 id="workspace-title">{profile.title}</h1>
+            </div>
+            <div className="workspace-promise">
+              <span aria-hidden="true" className="promise-mark">↳</span>
+              <p>{plainLanguage ? "You choose. The partner adapts." : "The protocol belongs to the person. The accountability belongs to the communication partner."}</p>
+              <small>Communication difficulty is not inability to decide.</small>
+            </div>
           </div>
           <dl className="revision-strip">
             <div><dt>Profile</dt><dd>revision {profile.revision}</dd></div>
@@ -385,12 +396,22 @@ export function WorkspaceApp() {
             <button className="button secondary" onClick={() => void exportJson()} type="button">Export JSON</button>
             <label className="button secondary file-button">Import JSON<input accept="application/json,.json" onChange={(event) => void importJson(event.target.files?.[0])} type="file" /></label>
           </div>
+          <ol className="rehearsal-flow" aria-label="Rehearsal protocol flow">
+            <li data-state="complete"><span>01</span><div><strong>Define</strong><small>Person-authored protocol</small></div></li>
+            <li data-state={scenario.status === "approved" ? "complete" : "current"}><span>02</span><div><strong>Approve</strong><small>Visible scenario review</small></div></li>
+            <li data-state={session.state === "active" || session.state === "paused" ? "current" : session.state === "stopped" || session.state === "debrief" || session.state === "protocol_patch_staged" || session.state === "complete" ? "complete" : "upcoming"}><span>03</span><div><strong>Rehearse</strong><small>Every turn is checked</small></div></li>
+            <li data-state={report.entries.length > 0 ? "current" : "upcoming"}><span>04</span><div><strong>Reflect</strong><small>Partner-only evidence</small></div></li>
+          </ol>
         </section>
 
         <section className="product-section" id="my-signals" aria-labelledby="signals-title">
           <div className="section-heading">
             <div><p className="eyebrow">01 · Source of truth</p><h2 id="signals-title">My Signals</h2></div>
             <p>You select every semantic signal directly. Silence creates no event and never means yes.</p>
+          </div>
+
+          <div className="signal-principles" aria-label="Signal guarantees">
+            <span>Person selected</span><span>Meaning is explicit</span><span>No timer</span><span>Never inferred</span>
           </div>
 
           <form
@@ -500,6 +521,12 @@ export function WorkspaceApp() {
             </div>
           </div>
 
+          <ul className="practice-trust-strip" aria-label="Current rehearsal protections">
+            <li><span aria-hidden="true">01</span><div><strong>{mode === "human" ? "Site tools blocked" : "Scoped access on"}</strong><small>Owner-controlled mode</small></div></li>
+            <li><span aria-hidden="true">02</span><div><strong>Every turn checked</strong><small>Same deterministic engine</small></div></li>
+            <li><span aria-hidden="true">03</span><div><strong>No inferred response</strong><small>Only visible signals count</small></div></li>
+          </ul>
+
           {mode === "human" ? (
             <div className="practice-grid">
               <div>
@@ -531,15 +558,27 @@ export function WorkspaceApp() {
             </div>
           ) : (
             <div className="agent-mode-panel">
-              <div>
-                <h3>Partner turns</h3>
+              <div className="turn-stage">
+                <div className="turn-stage-header"><p className="eyebrow">Visible partner output</p><span>{acceptedTurns.length ? "Protocol checked" : "Awaiting a valid turn"}</span></div>
+                <h3>Partner turn</h3>
                 {acceptedTurns.length === 0 ? <p className="empty-state">No partner turn yet. The page will never auto-advance.</p> : (
                   <ol className="turn-list">{acceptedTurns.map((event) => <li key={event.id}>{event.turn.segments.map(({ text }) => text).join(" ")}<small>Accepted under profile revision {session.profileRevision}</small></li>)}</ol>
                 )}
               </div>
-              <div><h3>Work beside ChatGPT through Site tools</h3><p><strong>Scoped agent access is on.</strong> The agent can read only shared fields, offer validated turns, and stage suggestions. It cannot select your signal, resume, ratify, publish, share, or export.</p></div>
-              <textarea aria-label="ChatGPT starter prompt" readOnly rows={7} value={starterPrompt} />
-              <button className="button primary" onClick={() => void copyPrompt()} type="button">Copy ChatGPT starter prompt</button>
+              <aside className="agent-boundary" aria-label="Agent authority boundary">
+                <p className="eyebrow">Live authority boundary</p>
+                <h3>ChatGPT can collaborate—never take over.</h3>
+                <p><strong>Scoped agent access is on.</strong> Only shared fields can be read.</p>
+                <dl>
+                  <div><dt>May</dt><dd>Read · audit · offer · stage</dd></div>
+                  <div><dt>Never</dt><dd>Signal · resume · ratify · share</dd></div>
+                </dl>
+              </aside>
+              <div className="prompt-panel">
+                <div><p className="eyebrow">One-paste demo</p><h3>Give ChatGPT the rehearsal brief.</h3><p>The prompt deliberately demonstrates rejection, repair, and owner authority.</p></div>
+                <textarea aria-label="ChatGPT starter prompt" readOnly rows={6} value={starterPrompt} />
+                <button className="button primary" onClick={() => void copyPrompt()} type="button">Copy ChatGPT starter prompt</button>
+              </div>
             </div>
           )}
 

@@ -56,6 +56,9 @@ test("forced colors and reduced motion retain semantics without blocking axe", a
   expect(transitionDurationSeconds).toBeLessThanOrEqual(0.00001);
   await expect(page.getByRole("button", { name: /Red — stop/ })).toBeVisible();
 
+  await page.getByRole("button", { name: "Agent rehearsal" }).click();
+  await expect(page.getByText(/ChatGPT can collaborate/i)).toBeVisible();
+
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(({ impact }) => impact === "serious" || impact === "critical")).toEqual([]);
 });

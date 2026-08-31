@@ -13,6 +13,13 @@ const sections = [
   "Privacy",
 ] as const;
 
+const rehearsalFlow = [
+  ["01", "Brief", "Only owner-shared fields"],
+  ["02", "Check", "Deterministic protocol rules"],
+  ["03", "Signal", "Selected only by the person"],
+  ["04", "Reflect", "The partner is audited"],
+] as const;
+
 export function AppShell({ demo = false }: { demo?: boolean }) {
   return (
     <div className="site-frame">
@@ -36,10 +43,10 @@ export function AppShell({ demo = false }: { demo?: boolean }) {
           <ul>
             {sections.map((section, index) => (
               <li key={section}>
-                <a aria-current={index === 0 ? "page" : undefined} href={`#${section.toLowerCase().replaceAll(" ", "-")}`}>
+                <Link href={`/demo/#${section.toLowerCase().replaceAll(" ", "-")}`}>
                   <span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
                   {section}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -77,15 +84,40 @@ function WelcomeHome() {
           </p>
           <div className="hero-actions">
             <Link className="button primary" href="/demo/">Try Maya’s synthetic demo</Link>
-            <a className="button secondary" href="#my-signals">Create a blank profile</a>
+            <Link className="button secondary" href="/demo/?start=blank">Create a blank profile</Link>
           </div>
+          <p className="hero-assurance">No login · No diagnosis · No timer · Works without an agent</p>
         </div>
-        <div className="signal-orbit" aria-label="Signal examples: more time, more information, pause, and stop">
-          <span className="signal-chip blue">More time</span>
-          <span className="signal-chip purple">Information</span>
-          <span className="signal-chip amber">Rephrase</span>
-          <span className="signal-chip red">Stop</span>
+        <div className="signal-orbit" aria-label="The person remains at the center while distinct signals tell a partner how to adapt">
+          <span className="orbit-label">Person-controlled signals</span>
+          <span className="signal-chip blue"><i aria-hidden="true" />More time</span>
+          <span className="signal-chip purple"><i aria-hidden="true" />Information</span>
+          <span className="signal-chip amber"><i aria-hidden="true" />Rephrase</span>
+          <span className="signal-chip red"><i aria-hidden="true" />Stop</span>
         </div>
+      </section>
+
+      <section className="proof-strip" aria-label="Product proof points">
+        <div><strong>8</strong><span>scoped Site tools</span></div>
+        <div><strong>0</strong><span>agent authority over signals</span></div>
+        <div><strong>0</strong><span>server data stores</span></div>
+        <div><strong>1</strong><span>source of truth: the person</span></div>
+      </section>
+
+      <section className="flow-section" aria-labelledby="flow-title">
+        <div className="flow-copy">
+          <p className="eyebrow">An executable communication protocol</p>
+          <h2 id="flow-title">The page does more than describe what helps.</h2>
+          <p>It gives a partner a bounded way to read, propose, repair, and learn—while every human signal and final decision stays visible and owner-controlled.</p>
+        </div>
+        <ol className="flow-track">
+          {rehearsalFlow.map(([number, title, description]) => (
+            <li key={number}>
+              <span aria-hidden="true">{number}</span>
+              <div><strong>{title}</strong><small>{description}</small></div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="principle-grid" id="my-signals" aria-labelledby="principle-title">

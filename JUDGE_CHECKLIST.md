@@ -24,6 +24,16 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] The exact starter prompt is in the product and `DEMO_SCRIPT.md`.
 - [x] All challenge names, profiles, events, and screenshots are synthetic.
 
+## Judge-facing product clarity
+
+- [x] Every landing navigation item opens the matching real workspace section; no showcase-only anchors remain.
+- [x] `Create a blank profile` opens an actual blank local profile rather than a marketing section.
+- [x] The first viewport states the product inversion, human/agent availability, and concrete Site-tool/authority/storage proof.
+- [x] The Practice Room shows the accepted partner turn, deterministic check state, scoped agent access, and explicit `MAY`/`NEVER` authority boundary in one frame.
+- [x] Signal meaning is reinforced with shape and text, not color alone.
+- [x] Desktop and narrow landing layouts were visually inspected; 320 CSS-pixel horizontal-overflow coverage passes.
+- [x] Forced-colors and reduced-motion axe coverage includes the refreshed Agent rehearsal panel.
+
 ## Required agent path
 
 - [x] Scoped brief exposes only selected current fields.

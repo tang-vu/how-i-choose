@@ -4,6 +4,10 @@ All notable changes to How I Choose are documented here. The project follows a h
 
 ## [Unreleased]
 
+- Reworked the landing page into a judge-readable product story with a person-centered signal orbit, executable four-step protocol, concrete 8/0/0/1 proof strip, and fully functional workspace navigation.
+- Turned the blank-profile CTA into a real direct-start workflow and added desktop/narrow regression coverage for the action and landing-page reflow.
+- Elevated the Practice Room with a live protocol-checked turn stage, visible agent `MAY`/`NEVER` boundary, rehearsal protection strip, and one-paste demo panel; refreshed the synthetic product preview.
+- Expanded forced-colors coverage to the new agent state and fixed the contrast issue the release test exposed.
 - Recorded successful discovery of all eight real Site tools and the guarded rehearsal path in ChatGPT's built-in browser on deployed build `d9985080b5ab`.
 - Fixed a serious authorization mismatch where the Human-only label did not previously block registered Site tools. Human-only now fails closed for every read and write until the person visibly enables Agent rehearsal; legacy local sessions migrate to the disabled state.
 - Added unit, contract, and Playwright regression coverage for the durable access gate. Real ChatGPT then verified the deny/enable path on production build `236b6c4d9b87`.

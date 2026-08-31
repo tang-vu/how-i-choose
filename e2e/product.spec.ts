@@ -61,6 +61,14 @@ test("blank profile scenario requires visible review before practice", async ({ 
   await expect(page.getByText("Rehearsal active")).toBeVisible();
 });
 
+test("the landing-page blank-profile action opens a real blank workspace", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Create a blank profile" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Untitled communication profile" })).toBeVisible();
+  await expect(page).toHaveURL(/\/demo\/#my-signals$/);
+  await expect(page.getByRole("heading", { name: /start with your signals/i })).toHaveCount(0);
+});
+
 test("export and import remain explicit human file actions", async ({ page }) => {
   await openWorkspace(page);
   const downloadPromise = page.waitForEvent("download");

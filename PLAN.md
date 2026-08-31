@@ -38,6 +38,9 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 - [x] M12 — Integrate owner-run real ChatGPT evidence and enforce Human-only as durable Site-tool authorization.
   - Validation: legacy/default sessions deny every tool with `AGENT_ACCESS_DISABLED`; visible Agent rehearsal enables the same stable catalog; unit, coverage, contract, E2E, build, production smoke, CI, remote parity, and post-fix real ChatGPT denial/enable checks pass.
 
+- [x] M13 — Raise judge-facing product clarity and visual distinction without weakening owner authority or accessibility.
+  - Validation: every landing action reaches a real workflow; the executable protocol and authority boundary are visible at a glance; refreshed desktop/narrow layouts have no horizontal overflow; default, high-contrast, reduced-motion, and forced-colors states pass axe with no serious or critical findings; the refreshed synthetic preview is visually inspected.
+
 ## Required validation gates
 
 - Every normal milestone: targeted checks, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `git diff --check`.
