@@ -35,7 +35,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: live HTTPS URL works without login; `/demo` resets; source link and build SHA display; remote equals local; ChatGPT discovery verified or precisely marked unverified.
 - [x] M11 — Close remaining automated quality and repository-security gaps.
   - Validation: coverage thresholds pass with 73 tests; pnpm/action tooling is current and compatible; private vulnerability reporting, Dependabot alerts/fixes, secret scanning, and push protection are enabled; final CI/deployment parity is verified at handoff.
-- [ ] M12 — Integrate owner-run real ChatGPT evidence and enforce Human-only as durable Site-tool authorization.
+- [x] M12 — Integrate owner-run real ChatGPT evidence and enforce Human-only as durable Site-tool authorization.
   - Validation: legacy/default sessions deny every tool with `AGENT_ACCESS_DISABLED`; visible Agent rehearsal enables the same stable catalog; unit, coverage, contract, E2E, build, production smoke, CI, and remote parity pass; post-fix real ChatGPT recheck remains a separately identified manual action.
 
 ## Required validation gates

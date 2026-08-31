@@ -397,7 +397,11 @@ Validation run:
 - Full Playwright passed all 34 desktop/narrow tests with one worker and no retries, including axe, keyboard, forced-colors, reduced-motion, print, 320px reflow, Human-only authorization, and the complete judge path.
 - The production static build passed for `/`, `/_not-found`, and `/demo`.
 - Production dependency audit found no known vulnerabilities; peer dependency checks passed; secret scanning passed across all 100 release files.
-- Final post-edit lint, typecheck, unit, coverage, build, full E2E, audit, secret, peer, forbidden-capability, unsafe-rendering, and `git diff --check` gates passed. Push, deployment, CI, and remote parity remain before this milestone is complete.
+- Final post-edit lint, typecheck, unit, coverage, build, full E2E, audit, secret, peer, forbidden-capability, unsafe-rendering, and `git diff --check` gates passed.
+- Pushed implementation commit `2997dd4e7e23875b76b5550cd995b8c7c5135b22` to `origin/main` and verified exact remote parity.
+- Vercel deployment `dpl_2d6xKbWbJ4hQQXTtjr67yCAo1Vo2` reached READY and the canonical production alias served build `2997dd4e7e23`.
+- `pnpm smoke:prod` passed production routes/assets, security headers, zero third-party origins, footer SHA, unavailable-browser fallback, and offline-after-load human operation.
+- GitHub Actions quality run `33357144454` passed install, dependency/secret audits, lint, typecheck, unit tests, build, and full Playwright for the same implementation SHA in 2m05s.
 
 Remaining risks and manual actions:
 
@@ -405,6 +409,6 @@ Remaining risks and manual actions:
 - Human screen-reader and 400% zoom checks remain unverified.
 - Video publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
 
-Verified deployment URL: https://how-i-choose.vercel.app (currently pre-fix build `d9985080b5ab`; do not use it as evidence for the new Human-only guard).
+Verified deployment URL: https://how-i-choose.vercel.app (authorization implementation build `2997dd4e7e23`; this documentation-only closeout commit will replace the visible SHA after push and is subject to the same parity checks).
 
-Current next action: complete every automated gate, push this coherent authorization milestone, verify CI and exact-SHA production, then request only the post-fix real ChatGPT recheck and remaining human release actions.
+Current next action: push and verify this documentation-only closeout, then request only the post-fix real ChatGPT authorization recheck and the remaining human-controlled accessibility/video/submission actions.
