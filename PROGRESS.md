@@ -406,10 +406,10 @@ Validation run:
 
 Remaining risks and manual actions:
 
-- The new authorization behavior must be rechecked in real ChatGPT after the fixed commit reaches production: Human-only should return `AGENT_ACCESS_DISABLED`; visible Agent rehearsal should then enable tool use.
+- Post-fix real ChatGPT authorization verification passed on production build `236b6c4d9b87`: Human-only blocked brief/start without changed IDs; visible Agent rehearsal then enabled an `OK` brief with 20/20 shared fields and advanced only the owner-controlled session version from 1 to 2.
 - Human screen-reader and 400% zoom checks remain unverified.
 - Video publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
 
 Verified deployment URL: https://how-i-choose.vercel.app
 
-Current next action: the owner rechecks the new Human-only authorization in real ChatGPT, completes any desired human assistive-technology checks, then explicitly authorizes video publication and Devpost submission when ready. No agent-controlled implementation or release task remains open.
+Current next action: complete any desired human assistive-technology checks, then explicitly authorize video publication and Devpost submission when ready. No agent-controlled implementation, deployment, automated validation, or real-WebMCP verification task remains open.

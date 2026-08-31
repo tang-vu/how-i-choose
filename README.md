@@ -67,7 +67,7 @@ There is deliberately no tool for selecting a person's signal, answering for the
 9. person-selected Stop and blocked later turns;
 10. partner-only reporting, staged provenance, per-item owner review, derivation verification, and visible ratification.
 
-The exact prompt is in the app and [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Real ChatGPT discovered all eight deployed tools and exercised the guarded agent path on build `d9985080b5ab`; mocked and post-fix regression evidence remain recorded separately in [JUDGE_CHECKLIST.md](JUDGE_CHECKLIST.md).
+The exact prompt is in the app and [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Real ChatGPT discovered all eight deployed tools and exercised the guarded agent path on build `d9985080b5ab`; after the authorization fix, it verified that production build `236b6c4d9b87` denies brief/start calls in Human-only and enables scoped access only after the visible owner action. Mocked and real evidence remain recorded separately in [JUDGE_CHECKLIST.md](JUDGE_CHECKLIST.md).
 
 ## Architecture
 

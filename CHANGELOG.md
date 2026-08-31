@@ -6,7 +6,7 @@ All notable changes to How I Choose are documented here. The project follows a h
 
 - Recorded successful discovery of all eight real Site tools and the guarded rehearsal path in ChatGPT's built-in browser on deployed build `d9985080b5ab`.
 - Fixed a serious authorization mismatch where the Human-only label did not previously block registered Site tools. Human-only now fails closed for every read and write until the person visibly enables Agent rehearsal; legacy local sessions migrate to the disabled state.
-- Added unit, contract, and Playwright regression coverage for the durable access gate. A real-ChatGPT recheck of the new production build remains pending.
+- Added unit, contract, and Playwright regression coverage for the durable access gate. Real ChatGPT then verified the deny/enable path on production build `236b6c4d9b87`.
 - Human assistive-technology smoke tests remain to be recorded.
 - No stretch features are planned before release evidence is complete.
 - Closed the configured coverage gate with focused safety/error-path tests; 73 tests now exceed all global thresholds.
