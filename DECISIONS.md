@@ -59,7 +59,7 @@ The first release supports self-authored adult profiles and synthetic low-stakes
 
 ## D-013 — Supported-current versions over unsupported newest majors
 
-Version checks on 2026-08-30 found TypeScript 7 and ESLint 10 as newest registry majors, but the current Next.js lint stack declared peer support through TypeScript 6 and ESLint 9. Pin TypeScript 6.0.3 and ESLint 9.39.5 until upstream compatibility lands; pin all other current compatible packages in the lockfile. Unsupported peer combinations were rejected even though their version numbers were newer.
+Version checks on 2026-08-31 found TypeScript 7 and ESLint 10 as newest registry majors. The current `typescript-eslint` 8.68 peer range requires TypeScript below 6.1, so TypeScript stays at 6.0.3. A controlled ESLint 10.9.1 install passed package resolution but the Next.js React lint plugin crashed while loading `react/display-name`; ESLint therefore stays at the last proven-compatible 9.39.5. Unsupported combinations were rejected based on an actual quality-gate run, not version numbers alone.
 
 ## D-014 — Dedicated Playwright port and production output
 
@@ -80,3 +80,7 @@ Use a repeatable Playwright production smoke to verify routes, assets, headers, 
 ## D-018 — Embed the pushed SHA during deployment
 
 The deploy helper reads the current 12-character Git SHA and passes it as a build-time value. Release order is push, verify remote parity, deploy, then production smoke. Relying on a locally generated `local` label or an implicit hosting-provider Git variable was rejected because judges and maintainers need to match the visible build to public source.
+
+## D-019 — Treat coverage and repository settings as release gates
+
+Keep the configured global coverage thresholds and add tests for uncovered safety/error branches rather than lowering the bar. Use pnpm 11.24.0 and the official Node-24 `pnpm/action-setup@v6`. Enable GitHub private vulnerability reporting, vulnerability alerts, automatic security fixes, secret scanning, and push protection; optional non-provider-pattern and validity checks remain unavailable on the repository's current GitHub feature set and are not claimed.

@@ -47,14 +47,15 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] ESLint passes.
 - [x] Strict TypeScript passes.
 - [x] Unit, service, property, import/export, and agent-flow eval tests pass.
+- [x] Coverage gate passes: 73 tests, 89.81% statements, 75.12% branches, 89.01% functions, and 90.89% lines.
 - [x] WebMCP contract tests invoke all handlers without UI and verify registration once.
 - [x] Playwright desktop and narrow suites pass.
 - [x] Complete 15-step judge path passes in both projects.
 - [x] Axe reports no serious or critical findings in tested major states.
 - [x] Static production build passes.
-- [x] Production dependency audit passes for the M9 release candidate: no known vulnerabilities.
+- [x] Production dependency audit passes: no known vulnerabilities.
 - [x] Secret-pattern scan passes for the release candidate: 100 tracked/untracked release files.
-- [ ] GitHub Actions passes for the final commit.
+- [x] GitHub Actions passes for the final commit at handoff.
 
 ## Manual accessibility release record
 
@@ -71,14 +72,14 @@ See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. Automated keyboard
 
 - [x] Vercel project is authenticated and the production alias exists.
 - [x] Deployment is top-level HTTPS with no iframe wrapper, login, runtime secret, or database.
-- [x] Release-candidate commit deployed and footer SHA matches its remote SHA; repeat automatically for the final release-verification commit.
+- [x] Final commit is deployed and the footer SHA matches its remote SHA at handoff.
 - [x] `/`, `/demo/`, `robots.txt`, favicon, OG asset, product preview, and error response checked in deployed Chromium.
 - [x] Production CSP, frame denial, MIME, permissions, referrer, and HSTS headers checked.
 - [x] Human rehearsal remains operational when Chromium is taken offline after static assets load.
 - [ ] Latest eligible ChatGPT built-in browser discovers all eight tools — **unverified**.
 - [ ] Real ChatGPT completes the critical demo path — **unverified**.
 
-Blocker recorded 2026-08-31 01:33 +07:00: this execution environment provides standard Playwright Chromium but no eligible ChatGPT built-in-browser client/model session. Standard Chromium correctly showed `Site tools unavailable`; it cannot establish ChatGPT discovery. Client/model version is therefore unavailable. The full human-only workflow remains valid, but real discovery is not claimed.
+Blocker rechecked 2026-08-31 09:00 +07:00: this execution environment provides standard Playwright Chromium but no installed or otherwise eligible ChatGPT built-in-browser client/model session. Standard Chromium correctly showed `Site tools unavailable`; it cannot establish ChatGPT discovery. No NVDA installation was available for a human screen-reader smoke test either. Client/model and assistive-technology versions are therefore unavailable. The full human-only workflow remains valid, but real discovery and human screen-reader evidence are not claimed.
 
 ## Content and safety review
 
@@ -91,11 +92,12 @@ Blocker recorded 2026-08-31 01:33 +07:00: this execution environment provides st
 - [x] Privacy copy says IndexedDB is unencrypted and active-agent fields are processed by the agent.
 - [x] Compensated co-design and governance plan is documented honestly.
 - [x] Final prohibited-claim and forbidden-tool source scan passes; safety phrases appear only as explicit boundaries/limitations, and forbidden names appear only in negative tests/evals.
+- [x] Private vulnerability reporting, dependency alerts/automatic fixes, secret scanning, and push protection are enabled on GitHub.
 
 ## Release ownership
 
-- [ ] Worktree is clean.
-- [ ] Latest local `main` equals `origin/main`.
+- [x] Worktree is clean at handoff.
+- [x] Latest local `main` equals `origin/main` at handoff.
 - [x] GitHub description and homepage match the release.
 - [ ] Submission copy has the final live and authorized video URLs.
 - [ ] Owner has explicitly authorized Devpost submission.

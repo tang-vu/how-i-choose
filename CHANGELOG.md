@@ -6,6 +6,8 @@ All notable changes to How I Choose are documented here. The project follows a h
 
 - Real ChatGPT built-in-browser discovery and assistive-technology smoke tests remain to be recorded.
 - No stretch features are planned before release evidence is complete.
+- Closed the configured coverage gate with focused safety/error-path tests; 73 tests now exceed all global thresholds.
+- Updated pnpm and the Node-24 GitHub action, pinned action revisions, and enabled repository vulnerability reporting, alerts/fixes, secret scanning, and push protection.
 
 ## [0.1.0] — 2026-08-31
 

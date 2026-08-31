@@ -46,4 +46,61 @@ describe("partner adherence report", () => {
     expect(report.unresolvedSignalEventIds).toEqual(["event-blue"]);
     expect(report.needsHumanReview).toBe(true);
   });
+
+  it("links an explicit acknowledgment to an unconsumed signal", () => {
+    const signal: RehearsalEvent = {
+      id: "event-purple",
+      sequence: 0,
+      at,
+      actor: "owner",
+      type: "signal_selected",
+      signalId: "signal-purple",
+      meaning: "need_information",
+      consumed: false,
+    };
+    const acknowledgment: RehearsalEvent = {
+      id: "event-purple-ack",
+      sequence: 1,
+      at,
+      actor: "agent",
+      type: "signal_acknowledged",
+      signalEventId: signal.id,
+    };
+    const accepted: RehearsalEvent = {
+      id: "event-clean-turn",
+      sequence: 2,
+      at,
+      actor: "agent",
+      type: "partner_turn_accepted",
+      turn: validMayaTurn,
+      ruleIds: [],
+      repairedViolationEventIds: [],
+    };
+    const report = buildRehearsalReport({ ...mayaSession, events: [signal, acknowledgment, accepted] }, at);
+    expect(report.unresolvedSignalEventIds).toEqual([]);
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      category: "signal_acknowledged",
+      evidenceEventIds: [signal.id, acknowledgment.id],
+    }));
+    expect(report.entries.some(({ category }) => category === "violation_repaired")).toBe(false);
+  });
+
+  it("records a consumed owner signal even without a separate agent acknowledgment", () => {
+    const signal: RehearsalEvent = {
+      id: "event-red",
+      sequence: 0,
+      at,
+      actor: "owner",
+      type: "signal_selected",
+      signalId: "signal-red",
+      meaning: "stop",
+      consumed: true,
+    };
+    const report = buildRehearsalReport({ ...mayaSession, events: [signal] }, at);
+    expect(report.entries).toContainEqual(expect.objectContaining({
+      category: "signal_acknowledged",
+      evidenceEventIds: [signal.id],
+    }));
+    expect(report.needsHumanReview).toBe(false);
+  });
 });

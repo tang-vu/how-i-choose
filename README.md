@@ -112,7 +112,7 @@ This initial release is an open alpha. It has not been clinically validated. Cha
 
 ## Local development
 
-Requirements: Node 24.x and pnpm 11.20.0.
+Requirements: Node 24.x and pnpm 11.24.0.
 
 ```bash
 pnpm install --frozen-lockfile

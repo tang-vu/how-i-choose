@@ -83,6 +83,11 @@ describe("imperative WebMCP contracts and handlers", () => {
     expect(brief).toEqual(expect.objectContaining({ ok: true, profileRevision: 1, sessionVersion: 1 }));
   });
 
+  it("honestly declines registration when the browser API is unavailable", async () => {
+    const target = document.implementation.createHTMLDocument("Unsupported WebMCP test");
+    expect(await registerHowIChooseTools(target, { repository, ids, commands: dependencies })).toBe(false);
+  });
+
   it("uses strict bounded JSON schemas and matching Zod validation", () => {
     for (const schema of Object.values(WebMcpJsonSchemas)) expectClosedObjects(schema);
     expect(WebMcpInputSchemas.get_rehearsal_brief.safeParse({ extra: true }).success).toBe(false);

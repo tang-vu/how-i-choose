@@ -6,7 +6,7 @@ This repository is an open alpha. Security fixes are applied to the current `mai
 
 ## Report a vulnerability
 
-Use the repository's private GitHub security-advisory flow: `Security` → `Advisories` → `Report a vulnerability`. Do not include real health information, private communication profiles, authentication material, or third-party data in a report. If private reporting is unavailable, open a minimal issue asking the maintainer to enable a private channel without publishing exploit details.
+Private vulnerability reporting is enabled. Use the repository's GitHub security-advisory flow: `Security` → `Advisories` → `Report a vulnerability`. Do not include real health information, private communication profiles, authentication material, or third-party data in a report.
 
 ## Security posture
 
@@ -21,7 +21,8 @@ Use the repository's private GitHub security-advisory flow: `Security` → `Advi
 - metadata-only activity receipts;
 - no WebMCP clipboard, download, network, contact, delete, sharing, signal-selection, or ratification capability;
 - CSP, HSTS at the host, frame denial, referrer policy, MIME sniffing protection, and restricted browser permissions;
-- exact dependency lockfile, Dependabot, production audit, and tracked-file secret-pattern scan.
+- exact dependency lockfile, Dependabot alerts and automatic security fixes, production audit, and tracked-file secret-pattern scan;
+- GitHub secret scanning and push protection on the public repository.
 
 Run:
 

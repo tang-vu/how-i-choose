@@ -7,7 +7,7 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
 ## Milestones
 
 - [x] M0 — Verify repository ownership, GitHub access, runtime, package managers, deployment access, and authoritative challenge/WebMCP requirements.
-  - Validation: authenticated owner is `tang-vu`; Node 24.14.1 and pnpm 11.20.0 available; ChatGPT imperative top-level requirement confirmed from official docs.
+  - Validation: authenticated owner is `tang-vu`; Node 24.14.1 is available; pnpm was verified and later updated to 11.24.0; ChatGPT imperative top-level requirement confirmed from official docs.
 - [x] M1 — Make the existing repository public and push a root MIT license.
   - Validation: public GitHub repository; clean local/remote `main`; commit `9c2f70b`.
 - [x] M2 — Record the product contract, delivery plan, decisions, progress, and risks.
@@ -33,6 +33,8 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: audit results recorded, prohibited-claim search clean, docs complete, demo timed under three minutes.
 - [x] M10 — Deploy production, update repository metadata, smoke-test Chromium, document the unavailable ChatGPT built-in-browser check, and run the final release audit.
   - Validation: live HTTPS URL works without login; `/demo` resets; source link and build SHA display; remote equals local; ChatGPT discovery verified or precisely marked unverified.
+- [x] M11 — Close remaining automated quality and repository-security gaps.
+  - Validation: coverage thresholds pass with 73 tests; pnpm/action tooling is current and compatible; private vulnerability reporting, Dependabot alerts/fixes, secret scanning, and push protection are enabled; final CI/deployment parity is verified at handoff.
 
 ## Required validation gates
 

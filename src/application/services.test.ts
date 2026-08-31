@@ -308,6 +308,11 @@ describe("atomic application services", () => {
     expect(workspace?.profile.id).toBe(ids.profileId);
   });
 
+  it("rejects malformed and oversized imports before touching persistence", () => {
+    expect(() => parseWorkspaceJson("{")).toThrow("IMPORT_INVALID_JSON");
+    expect(() => parseWorkspaceJson("x".repeat(1_000_001))).toThrow("IMPORT_TOO_LARGE");
+  });
+
   it("persists across a database close and reload", async () => {
     const databaseName = db.name;
     db.close();

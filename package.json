@@ -5,7 +5,7 @@
   "type": "module",
   "description": "A local-first communication rehearsal workspace that evaluates whether the communication partner adapted.",
   "license": "MIT",
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": "24.x"
   },

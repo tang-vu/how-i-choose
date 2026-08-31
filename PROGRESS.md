@@ -342,3 +342,36 @@ Remaining risks and manual actions:
 Verified deployment URL: https://how-i-choose.vercel.app
 
 Current next action: run final gates, push the release-verification commit, deploy that exact SHA, verify production/CI parity, then hand off only the manual ChatGPT, assistive-technology, video, and submission actions.
+
+## M11 — Automated closeout and repository security
+
+Work completed:
+
+- Found that the existing coverage command failed despite all tests passing because branch coverage was 71.74% against the configured 75% threshold.
+- Added focused tests for global/context rules, contradictory effects, policy dominance, canonicalization fallbacks, hidden agent projections, report evidence, malformed/oversized imports, and unavailable WebMCP registration. Runtime behavior was unchanged.
+- Updated pnpm from 11.20.0 to 11.24.0 and the official GitHub setup action from v4 to its Node-24 v6 release.
+- Trialed current ESLint 10.9.1, reproduced an incompatibility crash in the Next.js React lint plugin, and restored the proven-compatible ESLint 9.39.5. `pnpm peers check` is clean after restoration; TypeScript remains 6.0.3 because `typescript-eslint` requires `<6.1`.
+- Enabled GitHub private vulnerability reporting, vulnerability alerts, automatic security fixes, secret scanning, and push protection. Optional non-provider-pattern and validity checks were not available in the current repository feature set and remain explicitly unclaimed.
+- Rechecked the host for an eligible ChatGPT desktop/built-in-browser session and NVDA installation; neither is available, so those manual checks remain external rather than fabricated.
+
+Validation run:
+
+- `pnpm test:coverage` passed: 8 files, 73 tests; 89.81% statements, 75.12% branches, 89.01% functions, and 90.89% lines.
+- `pnpm peers check` passed with no peer dependency issues.
+- `pnpm lint` passed after the compatibility-tested toolchain was restored.
+- `pnpm lint`, `pnpm typecheck`, and `pnpm test` passed; the unit suite contains 73 tests.
+- `pnpm build` passed with static `/`, `/_not-found`, and `/demo` routes.
+- CI-mode `pnpm test:e2e` passed all 34 desktop/narrow Chromium tests with one worker, including axe, keyboard, forced-colors, reduced-motion, 320px reflow, print, WebMCP, and the complete Maya path.
+- Production audit reported no known vulnerabilities; the secret scan passed all 100 release files.
+- Deployment, production smoke, GitHub Actions, and remote-parity checks follow for this final closeout commit.
+
+Remaining risks and manual actions:
+
+- Real ChatGPT discovery and the real-agent demo still require the owner to use an eligible ChatGPT built-in browser/model.
+- Human screen-reader and 400% browser-zoom checks remain unverified; the published checklist and automated accessibility/reflow evidence are ready for a human tester.
+- Recording or publishing a video and submitting Devpost still require explicit owner authorization.
+- The release tag remains intentionally deferred until the owner confirms submission.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently build `82510d711fa1`; this closeout commit will replace it after push and exact-SHA verification).
+
+Current next action: push this final automated closeout, deploy and smoke-test its exact SHA, confirm GitHub Actions and remote parity, then hand off only the external/manual actions above.

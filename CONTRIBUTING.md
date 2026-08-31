@@ -16,7 +16,7 @@ pnpm test:e2e
 pnpm build
 ```
 
-Use Node 24.x and pnpm 11.20.0. Keep dependency versions exact in `pnpm-lock.yaml`.
+Use Node 24.x and pnpm 11.24.0. Keep dependency versions exact in `pnpm-lock.yaml`.
 
 ## Product invariants
 
