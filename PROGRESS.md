@@ -376,3 +376,35 @@ Remaining risks and manual actions:
 Verified deployment URL: https://how-i-choose.vercel.app (currently build `82510d711fa1`; this closeout commit will replace it after push and exact-SHA verification).
 
 Current next action: push this final automated closeout, deploy and smoke-test its exact SHA, confirm GitHub Actions and remote parity, then hand off only the external/manual actions above.
+
+## M12 — Real ChatGPT evidence and Human-only authorization
+
+Work completed:
+
+- Recorded the owner's real ChatGPT built-in-browser run against deployed build `d9985080b5ab`: all eight top-level Site tools were discovered, the guarded agent path worked through draft patch staging, and no application console errors were observed.
+- Kept the evidence precise: the patch remained pending owner review and was neither accepted nor ratified; client/model details were not provided.
+- Classified the run's Human-only finding as an authorization defect. The mode had lived only in React state, so handlers could still read and mutate durable rehearsal state.
+- Replaced display-only mode with a durable, owner-controlled `agentAccessEnabled` session permission. Judge reset, blank data, and migrated legacy sessions fail closed to Human-only.
+- Added a visible owner-only toggle that increments `sessionVersion`. WebMCP reads check current IndexedDB state; mutations are blocked before dispatch and rechecked inside the atomic service transaction. Human-only practice continues through the separate `owner_ui` capability.
+- Added unit compatibility coverage, handler contract coverage for all-side-effect denial, and Playwright coverage that proves denial before visible enablement and the complete post-enable judge path.
+
+Validation run:
+
+- `pnpm lint` and `pnpm typecheck` passed.
+- `pnpm test` passed: 8 files and 76 tests.
+- `pnpm test:coverage` passed: 89.56% statements, 75.56% branches, 88.93% functions, and 90.78% lines.
+- Targeted desktop Playwright passed both the complete synthetic judge path and WebMCP registration/authorization path: 2 tests, one worker.
+- Full Playwright passed all 34 desktop/narrow tests with one worker and no retries, including axe, keyboard, forced-colors, reduced-motion, print, 320px reflow, Human-only authorization, and the complete judge path.
+- The production static build passed for `/`, `/_not-found`, and `/demo`.
+- Production dependency audit found no known vulnerabilities; peer dependency checks passed; secret scanning passed across all 100 release files.
+- Final post-edit lint, typecheck, unit, coverage, build, full E2E, audit, secret, peer, forbidden-capability, unsafe-rendering, and `git diff --check` gates passed. Push, deployment, CI, and remote parity remain before this milestone is complete.
+
+Remaining risks and manual actions:
+
+- The new authorization behavior must be rechecked in real ChatGPT after the fixed commit reaches production: Human-only should return `AGENT_ACCESS_DISABLED`; visible Agent rehearsal should then enable tool use.
+- Human screen-reader and 400% zoom checks remain unverified.
+- Video publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
+
+Verified deployment URL: https://how-i-choose.vercel.app (currently pre-fix build `d9985080b5ab`; do not use it as evidence for the new Human-only guard).
+
+Current next action: complete every automated gate, push this coherent authorization milestone, verify CI and exact-SHA production, then request only the post-fix real ChatGPT recheck and remaining human release actions.

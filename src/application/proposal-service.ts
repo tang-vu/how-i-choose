@@ -70,6 +70,14 @@ export class ProposalService {
       toolName: "stage_protocol_patch",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ patchId: string; diffs: StagedRuleDiff[]; activeConflicts: ReturnType<typeof findActiveRuleConflicts>; coverage: { activeRuleCount: number; signalMeaningCount: number } }>(request, ({ profile, session }) => {
+      if (!session.agentAccessEnabled) {
+        return {
+          accepted: false,
+          code: "AGENT_ACCESS_DISABLED",
+          violations: [{ code: "AGENT_ACCESS_DISABLED", message: "Human-only mode blocks Site tool access." }],
+          nextActions: ["enable_agent_rehearsal_in_visible_ui"],
+        };
+      }
       const transition = transitionRehearsal(session.state, "stage_protocol_patch");
       if (!transition.ok) {
         return {

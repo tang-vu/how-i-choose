@@ -35,6 +35,8 @@ Rehearsal works best when the person and agent share one visible, current worksp
 
 The imperative adapter registers once from the top-level `/demo/` page through `document.modelContext.registerTool()`. Every handler loads current IndexedDB state at execution time and calls the same application services and deterministic domain logic as the human interface. A stale agent cannot overwrite a newer person-authored revision.
 
+The workspace starts in **Human-only** mode. In that mode, all eight registered Site tools fail closed with `AGENT_ACCESS_DISABLED`; they cannot read the brief or change rehearsal state. Only the person can enable **Agent rehearsal** through the visible page. That owner-controlled permission is durable, revision-checked session state—not a display-only toggle.
+
 ### Site tool catalog
 
 | Tool | Effect | Purpose |
@@ -52,7 +54,7 @@ There is deliberately no tool for selecting a person's signal, answering for the
 
 ## Synthetic judge path
 
-`Reset judge demo` restores Maya, a clearly labeled synthetic profile, and an approved low-stakes community-workshop scenario. The reproducible path proves:
+`Reset judge demo` restores Maya, a clearly labeled synthetic profile, an approved low-stakes community-workshop scenario, and Human-only access. The person visibly enables Agent rehearsal before the reproducible agent path:
 
 1. scoped brief and readiness audit;
 2. owner-approved agent start;
@@ -65,7 +67,7 @@ There is deliberately no tool for selecting a person's signal, answering for the
 9. person-selected Stop and blocked later turns;
 10. partner-only reporting, staged provenance, per-item owner review, derivation verification, and visible ratification.
 
-The exact prompt is in the app and [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Tests never stand in for real ChatGPT discovery; the release checklist records that manual result separately.
+The exact prompt is in the app and [DEMO_SCRIPT.md](DEMO_SCRIPT.md). Real ChatGPT discovered all eight deployed tools and exercised the guarded agent path on build `d9985080b5ab`; mocked and post-fix regression evidence remain recorded separately in [JUDGE_CHECKLIST.md](JUDGE_CHECKLIST.md).
 
 ## Architecture
 

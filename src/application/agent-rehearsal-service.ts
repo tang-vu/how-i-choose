@@ -47,6 +47,14 @@ export class AgentRehearsalService {
       toolName: "start_approved_rehearsal",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ state: string }>(request, ({ session, scenario }) => {
+      if (this.source === "webmcp" && !session.agentAccessEnabled) {
+        return {
+          accepted: false,
+          code: "AGENT_ACCESS_DISABLED",
+          nextActions: ["enable_agent_rehearsal_in_visible_ui"],
+          violations: [{ code: "AGENT_ACCESS_DISABLED", message: "Human-only mode blocks Site tool access." }],
+        };
+      }
       if (scenario.status !== "approved") {
         return {
           accepted: false,
@@ -103,6 +111,14 @@ export class AgentRehearsalService {
       toolName: "offer_partner_turn",
     }, command, this.dependencies);
     return this.repository.runAtomicCommand<{ eventId: string; visible: true }>(request, ({ profile, session }) => {
+      if (this.source === "webmcp" && !session.agentAccessEnabled) {
+        return {
+          accepted: false,
+          code: "AGENT_ACCESS_DISABLED",
+          nextActions: ["enable_agent_rehearsal_in_visible_ui"],
+          violations: [{ code: "AGENT_ACCESS_DISABLED", message: "Human-only mode blocks Site tool access." }],
+        };
+      }
       const pending = session.pendingSignalEventId
         ? session.events.find(
             (event) => event.id === session.pendingSignalEventId && event.type === "signal_selected",
@@ -207,7 +223,7 @@ export class AgentRehearsalService {
       this.ids.sessionId,
       this.ids.scenarioId,
     );
-    if (!workspace) return null;
+    if (!workspace || (this.source === "webmcp" && !workspace.session.agentAccessEnabled)) return null;
     const acknowledged = new Set(
       workspace.session.events
         .filter((event) => event.type === "signal_acknowledged")

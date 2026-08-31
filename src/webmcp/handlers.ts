@@ -53,6 +53,14 @@ export class WebMcpHandlers {
       return result;
     }
 
+    if (mutatingTools.has(toolName)) {
+      const blocked = await this.queries.blockIfAgentAccessDisabled(toolName);
+      if (blocked) {
+        this.dependencies.onInvocation?.(toolName, false);
+        return blocked;
+      }
+    }
+
     let result: unknown;
     switch (toolName) {
       case "get_rehearsal_brief":

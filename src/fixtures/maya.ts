@@ -104,6 +104,7 @@ export const mayaSession: RehearsalSession = {
   sessionVersion: 1,
   scenarioId: mayaScenario.id,
   contextId,
+  agentAccessEnabled: false,
   state: "ready",
   events: [],
 };

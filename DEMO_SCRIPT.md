@@ -8,10 +8,11 @@ Target recording length: 2:40. Hard stop: 2:50, leaving at least ten seconds und
 
 1. Open `https://how-i-choose.vercel.app/demo/` in the eligible ChatGPT browser.
 2. Select `Continue with current local data` if onboarding appears, then `Reset judge demo`.
-3. Confirm the page says `Site tools available`, session `ready`, and profile revision 1.
-4. Open ChatGPT beside the Practice Room and paste the exact prompt below.
-5. Set browser zoom and capture dimensions so ChatGPT, the signal board, state strip, current turn, and activity panel remain legible.
-6. Rehearse once. If real discovery fails, do not record a simulated success; document the blocker in `JUDGE_CHECKLIST.md`.
+3. Confirm the page says `Site tools available`, `Human-only`, session `ready`, profile revision 1, and session version 1.
+4. Select the visible `Agent rehearsal` control. Confirm session version 2 before giving ChatGPT any instruction.
+5. Open ChatGPT beside the Practice Room and paste the exact prompt below.
+6. Set browser zoom and capture dimensions so ChatGPT, the signal board, state strip, current turn, and activity panel remain legible.
+7. Rehearse once. If real discovery fails, do not record a simulated success; document the blocker in `JUDGE_CHECKLIST.md`.
 
 ## Exact ChatGPT starter prompt
 
@@ -23,7 +24,7 @@ Target recording length: 2:40. Hard stop: 2:50, leaving at least ten seconds und
 | --- | --- | --- |
 | 0:00–0:12 | Show the product title, synthetic label, privacy count, and `ready` state. | “How I Choose is a local-first communication rehearsal workspace. The person defines the protocol; the app evaluates whether the communication partner adapted.” |
 | 0:12–0:25 | Briefly show Maya’s text-first, one-question, 12-word, literal-language, and two-option rules. | “Maya is synthetic. Her low-stakes protocol asks for text first, one short literal question, at most two options, and explicit handling of every signal.” |
-| 0:25–0:40 | Paste the starter prompt. Let ChatGPT call `get_rehearsal_brief` and `audit_rehearsal_readiness`, then start the already-approved session. Keep the activity panel visible. | “Site tools receive only fields Maya exposed. The agent can audit and start this visibly approved scenario, but it cannot approve, answer, resume, or ratify for her.” |
+| 0:25–0:40 | Show `Agent rehearsal` selected, then paste the starter prompt. Let ChatGPT call `get_rehearsal_brief` and `audit_rehearsal_readiness`, then start the already-approved session. Keep the activity panel visible. | “Human-only blocks every Site tool until the person visibly enables agent rehearsal. The enabled tools receive only fields Maya exposed; they cannot approve, answer, resume, or ratify for her.” |
 | 0:40–0:55 | ChatGPT intentionally offers the long two-question turn. Show the structured `INVALID_PARTNER_TURN` response and exact violations. | “The deliberate bad turn never appears as an accepted question. Deterministic checks reject two questions and the word-limit breach, then return repair instructions.” |
 | 0:55–1:07 | ChatGPT submits the repaired one-question turn. Show it in the Practice Room. | “The repair passes the same domain engine used by human-only practice, so the valid turn becomes visible.” |
 | 1:07–1:25 | The person clicks `Amber — not sure`. Tell ChatGPT the response was made on the page. ChatGPT reads `not_sure` and offers the differently worded question. | “Only the person selects a semantic signal. ChatGPT reads exactly ‘not sure,’ acknowledges it, and rephrases without silently changing the choice.” |

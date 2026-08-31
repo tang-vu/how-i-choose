@@ -10,6 +10,18 @@ import type { WorkspaceIds } from "@/application/owner-workflow-service";
 
 const guideBoundary = "Ask me directly whenever possible. This guide explains how to communicate with me. It is not consent, a capacity assessment, an advance directive, or medical authorization.";
 
+function agentAccessDisabledOutcome() {
+  return {
+    code: "AGENT_ACCESS_DISABLED",
+    data: null,
+    violations: [{
+      code: "AGENT_ACCESS_DISABLED",
+      message: "Human-only mode blocks Site tool access. The person can enable Agent rehearsal through the visible page.",
+    }],
+    nextActions: ["enable_agent_rehearsal_in_visible_ui"],
+  };
+}
+
 export class RehearsalQueryService {
   constructor(
     private readonly repository: WorkspaceRepository,
@@ -194,6 +206,13 @@ export class RehearsalQueryService {
     return this.read(toolName, async () => ({ code: "INVALID_TOOL_INPUT", data: null, violations, nextActions: ["repair_tool_input"] }));
   }
 
+  async blockIfAgentAccessDisabled(toolName: string): Promise<CommandResult<never> | null> {
+    const workspace = await this.repository.readWorkspace(this.ids.profileId, this.ids.sessionId, this.ids.scenarioId);
+    if (!workspace) throw new Error("WORKSPACE_NOT_FOUND");
+    if (workspace.session.agentAccessEnabled) return null;
+    return this.read<never>(toolName, async () => agentAccessDisabledOutcome());
+  }
+
   private validAgentActions(workspace: WorkspaceSnapshot): string[] {
     const actions = ["get_rehearsal_brief", "audit_rehearsal_readiness", "get_rehearsal_report", "verify_support_guide"];
     if (workspace.session.state === "ready" && workspace.scenario.status === "approved") actions.push("start_approved_rehearsal");
@@ -214,7 +233,9 @@ export class RehearsalQueryService {
     const workspace = await this.repository.readWorkspace(this.ids.profileId, this.ids.sessionId, this.ids.scenarioId);
     const receiptId = this.dependencies.id("receipt");
     if (!workspace) throw new Error("WORKSPACE_NOT_FOUND");
-    const outcome = await operation(workspace);
+    const outcome = this.source === "webmcp" && !workspace.session.agentAccessEnabled
+      ? agentAccessDisabledOutcome()
+      : await operation(workspace);
     const completedAt = this.dependencies.now();
     const activity: ActivityReceipt = {
       id: receiptId,

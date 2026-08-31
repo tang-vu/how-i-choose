@@ -19,7 +19,7 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 ## Deterministic demo reset
 
 - [x] `/demo/` provides a one-click reset to the synthetic Maya profile.
-- [x] Reset ends at approved `ready`, profile revision 1, session version 1.
+- [x] Reset ends at approved `ready`, profile revision 1, session version 1, and fail-closed Human-only access.
 - [x] Scenario is low stakes: community-workshop time and reminder method.
 - [x] The exact starter prompt is in the product and `DEMO_SCRIPT.md`.
 - [x] All challenge names, profiles, events, and screenshots are synthetic.
@@ -41,13 +41,15 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] The person visibly accepts or rejects each suggestion.
 - [x] Support guide is derivation-checked at the current revision before visible ratification.
 - [x] No WebMCP ratification or signal-selection tool exists.
+- [x] Human-only returns `AGENT_ACCESS_DISABLED` for every Site-tool read and write without advancing the session.
+- [x] Only the visible owner control can enable Agent rehearsal, producing a new session version.
 
 ## Automated quality evidence
 
 - [x] ESLint passes.
 - [x] Strict TypeScript passes.
 - [x] Unit, service, property, import/export, and agent-flow eval tests pass.
-- [x] Coverage gate passes: 73 tests, 89.81% statements, 75.12% branches, 89.01% functions, and 90.89% lines.
+- [x] Coverage gate passes: 76 tests, 89.56% statements, 75.56% branches, 88.93% functions, and 90.78% lines.
 - [x] WebMCP contract tests invoke all handlers without UI and verify registration once.
 - [x] Playwright desktop and narrow suites pass.
 - [x] Complete 15-step judge path passes in both projects.
@@ -76,10 +78,11 @@ See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the exact steps. Automated keyboard
 - [x] `/`, `/demo/`, `robots.txt`, favicon, OG asset, product preview, and error response checked in deployed Chromium.
 - [x] Production CSP, frame denial, MIME, permissions, referrer, and HSTS headers checked.
 - [x] Human rehearsal remains operational when Chromium is taken offline after static assets load.
-- [ ] Latest eligible ChatGPT built-in browser discovers all eight tools — **unverified**.
-- [ ] Real ChatGPT completes the critical demo path — **unverified**.
+- [x] ChatGPT's built-in browser discovered all eight real tools on deployed build `d9985080b5ab` — owner-run 2026-08-31.
+- [x] Real tools exercised readiness, stale recovery, idempotency, invalid-turn repair, semantic signal acknowledgment, Pause, Stop, reporting, guide verification, and draft-only patch staging — owner-run 2026-08-31.
+- [ ] New production build rechecked in real ChatGPT: Human-only blocks reads/writes, then visible Agent rehearsal enables them — **pending after the authorization fix**.
 
-Blocker rechecked 2026-08-31 09:00 +07:00: this execution environment provides standard Playwright Chromium but no installed or otherwise eligible ChatGPT built-in-browser client/model session. Standard Chromium correctly showed `Site tools unavailable`; it cannot establish ChatGPT discovery. No NVDA installation was available for a human screen-reader smoke test either. Client/model and assistive-technology versions are therefore unavailable. The full human-only workflow remains valid, but real discovery and human screen-reader evidence are not claimed.
+Evidence record: the owner opened the deployed synthetic demo in ChatGPT's built-in browser on 2026-08-31 and reported eight discovered tools with no application console errors. The real run confirmed readiness, revision/idempotency guards, deterministic rejection and repair, Blue/more-time acknowledgment, Pause/Stop enforcement, partner-only reporting, derived guide content, and staged-only protocol changes. The owner deliberately left the patch pending review and did not accept or ratify it. The run also found that build `d9985080b5ab` treated Human-only as display state rather than authorization; this repository now contains the fail-closed fix and automated regressions, while the post-fix real-browser recheck remains explicitly pending. ChatGPT client/model details were not provided. Human NVDA/screen-reader evidence also remains unverified.
 
 ## Content and safety review
 

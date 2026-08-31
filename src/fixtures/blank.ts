@@ -43,6 +43,7 @@ export const blankSession: RehearsalSession = {
   sessionVersion: 1,
   scenarioId: blankScenario.id,
   contextId: "practice-context",
+  agentAccessEnabled: false,
   state: "scenario_draft",
   events: [],
 };

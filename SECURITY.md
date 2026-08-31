@@ -17,6 +17,7 @@ Private vulnerability reporting is enabled. Use the repository's GitHub security
 - strict JSON Schemas with `additionalProperties: false` for Site tools;
 - safe React text rendering and no `dangerouslySetInnerHTML`;
 - compare-and-swap revisions and idempotency inside one Dexie transaction;
+- fail-closed Human-only default; only a visible owner command may grant durable, revision-checked Site-tool access;
 - deny-by-default agent projection; private notes absent from the projection type;
 - metadata-only activity receipts;
 - no WebMCP clipboard, download, network, contact, delete, sharing, signal-selection, or ratification capability;
@@ -46,6 +47,6 @@ Anyone with access to the browser profile or device may be able to inspect Index
 
 ## WebMCP risk
 
-Site tool definitions, page content, tool inputs, and tool results must be treated as untrusted. The active agent processes fields returned through tools. Browser safety review complements but does not replace app authorization. Revisions, disclosures, state guards, structural capability separation, and visible evidence remain authoritative.
+Site tool definitions, page content, tool inputs, and tool results must be treated as untrusted. Registration means the browser supports the tools; it does not grant access. Human-only mode returns `AGENT_ACCESS_DISABLED` for reads and writes until the person enables Agent rehearsal through the visible page. The active agent processes fields returned through enabled tools. Browser safety review complements but does not replace app authorization. Durable access permission, revisions, disclosures, state guards, structural capability separation, and visible evidence remain authoritative.
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) and [PRIVACY.md](PRIVACY.md).

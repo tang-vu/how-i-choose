@@ -25,6 +25,12 @@ Current ChatGPT documentation requires imperative registration from the top-leve
 
 Stable registration was chosen over dynamic unregistration because current discovery reliability matters more than state-dependent catalog cleverness. Identical state guards remain inside every handler.
 
+## Owner-controlled access gate
+
+The page registers the stable tool catalog whenever the browser API is available, but registration is not authorization. Judge reset and migrated legacy sessions default to **Human-only**. While `session.agentAccessEnabled` is false, every read and mutation returns `AGENT_ACCESS_DISABLED` with no domain change. Only the visible owner workflow can toggle this permission; the toggle increments `sessionVersion` and is stored in IndexedDB.
+
+Read handlers check current durable state at invocation time. Mutations are checked both before dispatch and again inside the atomic application-service transaction, closing the race between a UI mode change and a tool write. Human-only partner practice uses the same validator through an `owner_ui` capability and does not grant WebMCP access.
+
 ## Contracts
 
 Every object schema sets `additionalProperties: false`. Strings, IDs, arrays, entity counts, timers, revisions, enums, and rationale fields are bounded. Zod parses the same inputs again before application code runs.
@@ -80,6 +86,6 @@ Every invocation stores tool name, source, start/end/duration, result code, prof
 
 ## Tests and real discovery
 
-`src/webmcp/webmcp.test.ts` executes all handlers headlessly and verifies registration once, strict nested schemas, current-state reads, stale recovery, Stop, provenance, receipt privacy, and forbidden-tool absence. `e2e/webmcp.spec.ts` injects a browser `document.modelContext` and invokes registered page tools. `e2e/judge-path.spec.ts` completes the full owner/agent flow.
+`src/webmcp/webmcp.test.ts` executes all handlers headlessly and verifies registration once, strict nested schemas, current-state reads, the Human-only gate, stale recovery, Stop, provenance, receipt privacy, and forbidden-tool absence. `e2e/webmcp.spec.ts` injects a browser `document.modelContext`, proves that default Human-only blocks tool reads/writes, then enables Agent rehearsal through the visible page. `e2e/judge-path.spec.ts` completes the full owner/agent flow.
 
-These mocked tests prove the page integration but do not prove discovery in ChatGPT's built-in browser. That manual check must be recorded honestly in `JUDGE_CHECKLIST.md`.
+Mocked tests prove page integration but cannot prove ChatGPT discovery. On 2026-08-31, the owner used the deployed build `d9985080b5ab` in ChatGPT's built-in browser: all eight tools were discovered and the real-agent path exercised readiness, stale revision recovery, idempotency, deterministic rejection and repair, signal acknowledgment, Pause, Stop, reporting, guide verification, and draft-only patch staging. That run also exposed the former display-only Human-only toggle. The durable authorization fix is automated and must be rechecked in real ChatGPT on the newer production build; evidence is separated in `JUDGE_CHECKLIST.md`.

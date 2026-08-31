@@ -10,7 +10,7 @@ import {
   activeRulesForContext,
   type CommunicationRule,
 } from "@/domain/profile";
-import { StructuredPartnerTurnSchema } from "@/domain/rehearsal";
+import { RehearsalSessionSchema, StructuredPartnerTurnSchema } from "@/domain/rehearsal";
 import { mayaProfile, mayaScenario, mayaSession, validMayaTurn } from "@/fixtures/maya";
 
 describe("communication profile", () => {
@@ -31,6 +31,13 @@ describe("communication profile", () => {
     expect(
       StructuredPartnerTurnSchema.safeParse({ ...validMayaTurn, onRender: "run-code" }).success,
     ).toBe(false);
+  });
+
+  it("migrates legacy rehearsal sessions to Human-only access", () => {
+    const legacySession = structuredClone(mayaSession) as Partial<typeof mayaSession>;
+    delete legacySession.agentAccessEnabled;
+
+    expect(RehearsalSessionSchema.parse(legacySession).agentAccessEnabled).toBe(false);
   });
 
   it("builds a deny-by-default agent projection without private notes", () => {

@@ -140,6 +140,7 @@ export const RehearsalSessionSchema = z.object({
   sessionVersion: PositiveVersionSchema,
   scenarioId: StableIdSchema,
   contextId: StableIdSchema,
+  agentAccessEnabled: z.boolean().default(false),
   state: RehearsalStateSchema,
   events: z.array(RehearsalEventSchema).max(MAX_EVENTS).superRefine(assertUniqueIds),
   pendingSignalEventId: StableIdSchema.optional(),

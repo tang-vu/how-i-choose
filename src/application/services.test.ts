@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import Dexie from "dexie";
 
 import { AgentRehearsalService } from "@/application/agent-rehearsal-service";
 import {
@@ -8,7 +9,7 @@ import {
 import { OwnerWorkflowService, type WorkspaceIds } from "@/application/owner-workflow-service";
 import { RehearsalQueryService } from "@/application/rehearsal-query-service";
 import { hashProfile } from "@/domain/canonicalize";
-import { mayaProfile, validMayaTurn } from "@/fixtures/maya";
+import { mayaProfile, mayaSession, validMayaTurn } from "@/fixtures/maya";
 import { HowIChooseDatabase } from "@/persistence/db";
 import {
   exportWorkspaceJson,
@@ -171,6 +172,12 @@ describe("atomic application services", () => {
       idempotencyKey: "select-amber",
       signalId: "signal-amber",
     });
+    await owner.setAgentAccess({
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 3,
+      idempotencyKey: "enable-agent-for-signal-read",
+      enabled: true,
+    });
     const latest = await agent.readLatestSignal();
 
     expect(selected.data).toEqual(expect.objectContaining({ meaning: "not_sure" }));
@@ -183,12 +190,13 @@ describe("atomic application services", () => {
   });
 
   it("rejects invalid partner turns while recording non-visible adherence evidence", async () => {
-    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-for-invalid" });
+    await owner.setAgentAccess({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "enable-for-invalid", enabled: true });
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "start-for-invalid" });
     const invalid = structuredClone(validMayaTurn);
     invalid.segments.push({ kind: "question", text: "Which reminder should I add?" });
     const result = await agent.offerPartnerTurn({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 2,
+      expectedSessionVersion: 3,
       idempotencyKey: "invalid-turn",
       turn: invalid,
     });
@@ -201,15 +209,16 @@ describe("atomic application services", () => {
       expect.objectContaining({ type: "partner_turn_rejected", violationCodes: expect.arrayContaining(["QUESTION_COUNT"]) }),
     ]));
     expect(workspace?.session.events.some(({ type }) => type === "partner_turn_accepted")).toBe(false);
-    expect(workspace?.session.sessionVersion).toBe(3);
+    expect(workspace?.session.sessionVersion).toBe(4);
     expect(receipts[0]).toEqual(expect.objectContaining({ toolName: "offer_partner_turn", code: "INVALID_PARTNER_TURN" }));
   });
 
   it("accepts a valid partner turn once and persists visible evidence", async () => {
-    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-for-valid" });
+    await owner.setAgentAccess({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "enable-for-valid", enabled: true });
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "start-for-valid" });
     const command = {
       expectedProfileRevision: 1,
-      expectedSessionVersion: 2,
+      expectedSessionVersion: 3,
       idempotencyKey: "valid-turn",
       turn: validMayaTurn,
     } as const;
@@ -321,6 +330,32 @@ describe("atomic application services", () => {
     const workspace = await reopenedRepository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
     expect(workspace?.profile.title).toBe("Maya — synthetic sample");
     db = reopened;
+  });
+
+  it("upgrades a version-one database to fail-closed Human-only access", async () => {
+    const databaseName = `legacy-workspace-${crypto.randomUUID()}`;
+    const legacyDb = new Dexie(databaseName);
+    legacyDb.version(1).stores({
+      profiles: "id, revision, updatedAt",
+      sessions: "id, scenarioId, state, sessionVersion",
+      scenarios: "id, contextId, status",
+      profileVersions: "id, profileId, ratifiedVersion, revision",
+      activityReceipts: "id, toolName, startedAt, code",
+      idempotency: "id, scope, key, createdAt",
+    });
+    const legacySession = structuredClone(mayaSession) as Partial<typeof mayaSession>;
+    delete legacySession.agentAccessEnabled;
+
+    try {
+      await legacyDb.table("sessions").add(legacySession);
+      legacyDb.close();
+      const migratedDb = new HowIChooseDatabase(databaseName);
+      await migratedDb.open();
+      expect((await migratedDb.sessions.get(mayaSession.id))?.agentAccessEnabled).toBe(false);
+      migratedDb.close();
+    } finally {
+      await Dexie.delete(databaseName);
+    }
   });
 
   it("keeps activity receipts metadata-only", async () => {

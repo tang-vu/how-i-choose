@@ -33,6 +33,7 @@ The static host serves code and headers but receives no app-domain writes. Brows
 | --- | --- | --- |
 | Agent reads unrelated/private fields | allowlisted DTO, entity + disclosure checks, private-notes type exclusion, projection tests | a person may intentionally expose sensitive wording |
 | Agent changes owner-only state | separate owner/agent services; no signal, resume, review, ratify, share, export, contact, or delete tool | ordinary browser automation outside WebMCP remains subject to browser controls |
+| Registered tools act while Human-only is selected | fail-closed durable permission defaults false; visible owner toggle increments session version; reads check invocation-time state; mutations recheck inside the transaction | a compromised page/browser can bypass application controls |
 | Stale agent overwrites newer profile | profile/session compare-and-swap inside transaction; recovery action returns current revisions | concurrent UI can still require a visible retry |
 | Duplicate invocation | scoped idempotency fingerprint and saved original result | storage clearing removes replay memory |
 | Partial write | all documents parsed and written in one Dexie transaction; rollback tests | browser/storage failure can abort an action |
@@ -53,6 +54,7 @@ The app must not be used to infer or verify agreement, capacity, coercion, diagn
 ## Security invariants
 
 - silence never creates semantic state;
+- Human-only blocks all WebMCP reads and writes until a visible owner action enables Agent rehearsal;
 - only visible owner controls create person signal events;
 - Pause blocks turns until visible owner resume;
 - Stop is terminal for the session;

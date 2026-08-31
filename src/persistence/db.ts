@@ -55,6 +55,13 @@ export class HowIChooseDatabase extends Dexie {
       activityReceipts: "id, toolName, startedAt, code",
       idempotency: "id, scope, key, createdAt",
     });
+    this.version(2).stores({
+      sessions: "id, scenarioId, state, sessionVersion",
+    }).upgrade(async (transaction) => {
+      await transaction.table<RehearsalSession, string>("sessions").toCollection().modify((session) => {
+        session.agentAccessEnabled ??= false;
+      });
+    });
   }
 }
 

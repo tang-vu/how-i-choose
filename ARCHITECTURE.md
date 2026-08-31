@@ -27,7 +27,7 @@ src/webmcp adapts browser calls to application services; it owns no domain rules
 
 ## Durable model
 
-`CommunicationProfile`, `Scenario`, and `RehearsalSession` are strict schema-versioned documents with bounded entity counts, stable IDs, monotonic revisions, and ISO timestamps. Ratification creates an immutable `ProfileVersionRecord` containing the canonical SHA-256 hash and complete accepted profile snapshot.
+`CommunicationProfile`, `Scenario`, and `RehearsalSession` are strict schema-versioned documents with bounded entity counts, stable IDs, monotonic revisions, and ISO timestamps. The session carries the durable owner-controlled `agentAccessEnabled` permission; missing legacy values migrate to false. Ratification creates an immutable `ProfileVersionRecord` containing the canonical SHA-256 hash and complete accepted profile snapshot.
 
 Rehearsal events use tagged unions. Question segments are structured arrays, so question count does not depend on a language model. Silence is the absence of an event.
 
@@ -47,7 +47,7 @@ Rejected content turns may append a non-visible `partner_turn_rejected` adherenc
 
 ## Authority boundaries
 
-`OwnerWorkflowService` contains visible owner-only actions: selecting signals, resuming, scenario approval, suggestion review, import-adjacent workflows, undo, and ratification. `AgentRehearsalService`, `ProposalService`, and `RehearsalQueryService` expose only the allowed agent capabilities. WebMCP does not instantiate the owner service.
+`OwnerWorkflowService` contains visible owner-only actions: enabling or disabling agent access, selecting signals, resuming, scenario approval, suggestion review, import-adjacent workflows, undo, and ratification. `AgentRehearsalService`, `ProposalService`, and `RehearsalQueryService` expose only the allowed agent capabilities. WebMCP does not instantiate the owner service. Every WebMCP read checks the current access permission, and every mutation rechecks it inside the revision-safe transaction.
 
 The support-guide verifier is shared by an owner UI button and the read-only WebMCP tool. Ratification checks for a successful verification receipt at the current profile revision and for zero unreviewed agent suggestions.
 

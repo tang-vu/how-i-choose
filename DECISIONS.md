@@ -84,3 +84,7 @@ The deploy helper reads the current 12-character Git SHA and passes it as a buil
 ## D-019 — Treat coverage and repository settings as release gates
 
 Keep the configured global coverage thresholds and add tests for uncovered safety/error branches rather than lowering the bar. Use pnpm 11.24.0 and the official Node-24 `pnpm/action-setup@v6`. Enable GitHub private vulnerability reporting, vulnerability alerts, automatic security fixes, secret scanning, and push protection; optional non-provider-pattern and validity checks remain unavailable on the repository's current GitHub feature set and are not claimed.
+
+## D-020 — Treat practice mode as durable authorization
+
+Human-only must mean that the active browser agent cannot read or mutate the rehearsal, not merely that the page renders a different form. Store the owner-controlled `agentAccessEnabled` flag on the revisioned rehearsal session, default and migrate it to false, and make all WebMCP queries fail closed. Mutating services recheck the flag inside the atomic transaction so a UI race cannot authorize a stale call. Keeping mode in React component state or merely renaming the label was rejected because neither enforces the user's stated boundary.

@@ -58,6 +58,12 @@ describe("imperative WebMCP contracts and handlers", () => {
     owner = new OwnerWorkflowService(repository, ids, dependencies);
     handlers = new WebMcpHandlers({ repository, ids, commands: dependencies });
     await owner.resetSyntheticDemo();
+    await owner.setAgentAccess({
+      expectedProfileRevision: 1,
+      expectedSessionVersion: 1,
+      idempotencyKey: "enable-agent-for-webmcp-tests",
+      enabled: true,
+    });
   });
 
   afterEach(async () => {
@@ -80,12 +86,60 @@ describe("imperative WebMCP contracts and handlers", () => {
     expect(registrations.every(({ annotations }) => annotations?.destructiveHint === false && annotations.openWorldHint === false)).toBe(true);
 
     const brief = await registrations.find(({ name }) => name === "get_rehearsal_brief")!.execute({});
-    expect(brief).toEqual(expect.objectContaining({ ok: true, profileRevision: 1, sessionVersion: 1 }));
+    expect(brief).toEqual(expect.objectContaining({ ok: true, profileRevision: 1, sessionVersion: 2 }));
   });
 
   it("honestly declines registration when the browser API is unavailable", async () => {
     const target = document.implementation.createHTMLDocument("Unsupported WebMCP test");
     expect(await registerHowIChooseTools(target, { repository, ids, commands: dependencies })).toBe(false);
+  });
+
+  it("blocks every Site tool read and side effect while the visible mode is Human-only", async () => {
+    await owner.resetSyntheticDemo();
+    const invocations = [
+      ["get_rehearsal_brief", {}],
+      ["audit_rehearsal_readiness", { expectedProfileRevision: 1, scenarioId: ids.scenarioId }],
+      ["start_approved_rehearsal", { expectedProfileRevision: 1, expectedSessionVersion: 1, scenarioId: ids.scenarioId, idempotencyKey: "blocked-human-only-start" }],
+      ["offer_partner_turn", offerInput(1, 1, "blocked-human-only-turn")],
+      ["read_latest_signal", {}],
+      ["get_rehearsal_report", {}],
+      ["stage_protocol_patch", {
+        expectedProfileRevision: 1,
+        expectedSessionVersion: 1,
+        idempotencyKey: "blocked-human-only-patch",
+        proposedRules: [{
+          operation: "add",
+          category: "pacing",
+          effect: "prefer",
+          strength: "should",
+          contextIds: ["community-workshop"],
+          controlledValue: "offer_extra_pause:true",
+          displayText: "Offer an extra pause before repeating a question.",
+        }],
+        sourceRehearsalEventIds: ["event-source"],
+        rationale: "This valid-shaped patch must remain blocked.",
+      }],
+      ["verify_support_guide", {}],
+    ] as const;
+    const results = [];
+    for (const [toolName, input] of invocations) {
+      results.push(await handlers.execute(toolName, input));
+    }
+    const workspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
+    expect(results).toHaveLength(HOW_I_CHOOSE_TOOL_NAMES.length);
+    for (const result of results) {
+      expect(result).toEqual(expect.objectContaining({ ok: false, code: "AGENT_ACCESS_DISABLED", sessionVersion: 1 }));
+    }
+    expect(workspace?.session).toEqual(expect.objectContaining({
+      agentAccessEnabled: false,
+      state: "ready",
+      sessionVersion: 1,
+      events: [],
+    }));
+    const receipts = await repository.listReceipts();
+    expect(receipts).toHaveLength(HOW_I_CHOOSE_TOOL_NAMES.length);
+    expect(receipts.map(({ toolName }) => toolName).toSorted()).toEqual([...HOW_I_CHOOSE_TOOL_NAMES].toSorted());
+    expect(receipts.every(({ code, changedIds }) => code === "AGENT_ACCESS_DISABLED" && changedIds.length === 0)).toBe(true);
   });
 
   it("uses strict bounded JSON schemas and matching Zod validation", () => {
@@ -125,42 +179,42 @@ describe("imperative WebMCP contracts and handlers", () => {
 
     await owner.updateRule({
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       idempotencyKey: "owner-edits-during-agent",
       ruleId: "rule-channel-text",
       changes: { displayText: "Use text only now." },
     });
     const currentBrief = await handlers.execute("get_rehearsal_brief", {});
-    expect(currentBrief).toEqual(expect.objectContaining({ profileRevision: 2, sessionVersion: 2 }));
+    expect(currentBrief).toEqual(expect.objectContaining({ profileRevision: 2, sessionVersion: 3 }));
     expect(JSON.stringify(currentBrief)).toContain("Use text only now.");
   });
 
   it("recovers from stale revisions, rejects invalid turns, and accepts a repaired turn", async () => {
-    const stale = await handlers.execute("offer_partner_turn", offerInput(0, 1, "stale-turn"));
+    const stale = await handlers.execute("offer_partner_turn", offerInput(0, 2, "stale-turn"));
     expect(stale).toEqual(expect.objectContaining({ ok: false, code: "STALE_PROFILE_REVISION", nextActions: ["get_rehearsal_brief"] }));
 
     await handlers.execute("start_approved_rehearsal", {
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       scenarioId: ids.scenarioId,
       idempotencyKey: "start-before-repair",
     });
 
-    const invalid = offerInput(1, 2, "invalid-two-questions");
+    const invalid = offerInput(1, 3, "invalid-two-questions");
     invalid.segments.push({ kind: "question", text: "Which reminder should I add?" });
     const rejected = await handlers.execute("offer_partner_turn", invalid);
-    expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 3 }));
+    expect(rejected).toEqual(expect.objectContaining({ ok: false, code: "INVALID_PARTNER_TURN", sessionVersion: 4 }));
     expect(JSON.stringify(rejected)).toContain("QUESTION_COUNT");
 
-    const repaired = await handlers.execute("offer_partner_turn", offerInput(1, 3, "repaired-turn"));
-    expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 4, data: expect.objectContaining({ visible: true }) }));
+    const repaired = await handlers.execute("offer_partner_turn", offerInput(1, 4, "repaired-turn"));
+    expect(repaired).toEqual(expect.objectContaining({ ok: true, sessionVersion: 5, data: expect.objectContaining({ visible: true }) }));
     const report = await handlers.execute("get_rehearsal_report", {});
     expect(JSON.stringify(report)).toContain("violation_repaired");
   });
 
   it("returns only the exact shared person-authored signal and enforces Stop", async () => {
-    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-amber" });
-    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "amber", signalId: "signal-amber" });
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "start-before-amber" });
+    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 3, idempotencyKey: "amber", signalId: "signal-amber" });
     const signal = await handlers.execute("read_latest_signal", {});
     expect(signal).toEqual(expect.objectContaining({
       ok: true,
@@ -168,10 +222,11 @@ describe("imperative WebMCP contracts and handlers", () => {
     }));
 
     await owner.resetSyntheticDemo();
-    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-stop" });
-    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "red-stop", signalId: "signal-red" });
-    const stopped = await handlers.execute("offer_partner_turn", offerInput(1, 3, "after-stop"));
-    expect(stopped).toEqual(expect.objectContaining({ ok: false, code: "SESSION_STOPPED", sessionVersion: 3 }));
+    await owner.setAgentAccess({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "enable-before-stop", enabled: true });
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "start-before-stop" });
+    await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: 3, idempotencyKey: "red-stop", signalId: "signal-red" });
+    const stopped = await handlers.execute("offer_partner_turn", offerInput(1, 4, "after-stop"));
+    expect(stopped).toEqual(expect.objectContaining({ ok: false, code: "SESSION_STOPPED", sessionVersion: 4 }));
     const workspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
     expect(workspace?.session.events.some(({ type }) => type === "partner_turn_accepted")).toBe(false);
   });
@@ -179,12 +234,12 @@ describe("imperative WebMCP contracts and handlers", () => {
   it("starts only an approved ready session and stages provenance without ratification", async () => {
     const started = await handlers.execute("start_approved_rehearsal", {
       expectedProfileRevision: 1,
-      expectedSessionVersion: 1,
+      expectedSessionVersion: 2,
       scenarioId: ids.scenarioId,
       idempotencyKey: "agent-start",
     });
-    expect(started).toEqual(expect.objectContaining({ ok: true, sessionVersion: 2, data: { state: "active" } }));
-    const offered = await handlers.execute("offer_partner_turn", offerInput(1, 2, "source-turn")) as { data: { eventId: string }; sessionVersion: number };
+    expect(started).toEqual(expect.objectContaining({ ok: true, sessionVersion: 3, data: { state: "active" } }));
+    const offered = await handlers.execute("offer_partner_turn", offerInput(1, 3, "source-turn")) as { data: { eventId: string }; sessionVersion: number };
     await owner.selectSignal({ expectedProfileRevision: 1, expectedSessionVersion: offered.sessionVersion, idempotencyKey: "stop-before-debrief", signalId: "signal-red" });
     const stoppedWorkspace = await repository.readWorkspace(ids.profileId, ids.sessionId, ids.scenarioId);
     await owner.openDebrief({
@@ -233,8 +288,8 @@ describe("imperative WebMCP contracts and handlers", () => {
   it("records metadata-only receipts for reads, invalid input, and mutations", async () => {
     await handlers.execute("get_rehearsal_brief", {});
     await handlers.execute("offer_partner_turn", { extra: "private prose must not persist" });
-    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 1, idempotencyKey: "start-before-receipt" });
-    await handlers.execute("offer_partner_turn", offerInput(1, 2));
+    await owner.startHumanRehearsal({ expectedProfileRevision: 1, expectedSessionVersion: 2, idempotencyKey: "start-before-receipt" });
+    await handlers.execute("offer_partner_turn", offerInput(1, 3));
     const receipts = await repository.listReceipts();
     expect(receipts.map(({ toolName }) => toolName)).toEqual(expect.arrayContaining(["get_rehearsal_brief", "offer_partner_turn"]));
     expect(JSON.stringify(receipts)).not.toContain("private prose");

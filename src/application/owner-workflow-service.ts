@@ -21,6 +21,10 @@ const ExpectedVersionsSchema = z.object({
   idempotencyKey: StableIdSchema.max(128),
 }).strict();
 
+const SetAgentAccessCommandSchema = ExpectedVersionsSchema.extend({
+  enabled: z.boolean(),
+}).strict();
+
 const UpdateRuleCommandSchema = ExpectedVersionsSchema.extend({
   ruleId: StableIdSchema,
   changes: z.object({
@@ -481,6 +485,32 @@ export class OwnerWorkflowService {
 
   async startHumanRehearsal(input: z.input<typeof ExpectedVersionsSchema>): Promise<CommandResult<{ state: string }>> {
     return this.changeSessionState("owner_start_rehearsal", "start_approved_rehearsal", input);
+  }
+
+  async setAgentAccess(
+    unchecked: z.input<typeof SetAgentAccessCommandSchema>,
+  ): Promise<CommandResult<{ agentAccessEnabled: boolean }>> {
+    const command = SetAgentAccessCommandSchema.parse(unchecked);
+    const request = await prepareAtomicRequest({
+      scope: "owner_set_agent_access",
+      idempotencyKey: command.idempotencyKey,
+      ...this.ids,
+      expectedProfileRevision: command.expectedProfileRevision,
+      expectedSessionVersion: command.expectedSessionVersion,
+      source: "owner_ui",
+      toolName: "owner_set_agent_access",
+    }, command, this.dependencies);
+    return this.repository.runAtomicCommand<{ agentAccessEnabled: boolean }>(request, ({ session }) => ({
+      accepted: true,
+      session: {
+        ...session,
+        agentAccessEnabled: command.enabled,
+        sessionVersion: session.sessionVersion + 1,
+      },
+      data: { agentAccessEnabled: command.enabled },
+      changedIds: [session.id],
+      nextActions: command.enabled ? ["get_rehearsal_brief"] : ["continue_human_only_practice"],
+    }));
   }
 
   private async changeSessionState(

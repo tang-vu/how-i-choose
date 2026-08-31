@@ -141,7 +141,7 @@ export class WorkspaceRepository {
       this.db.scenarios.get(scenarioId),
     ]);
     if (!profile || !session || !scenario) return null;
-    return { profile, session, scenario };
+    return { profile, session: RehearsalSessionSchema.parse(session), scenario };
   }
 
   async resetWorkspace(input: ResetWorkspaceInput): Promise<void> {

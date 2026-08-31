@@ -115,7 +115,6 @@ export function WorkspaceApp() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("Loading your local workspace.");
   const [onboarding, setOnboarding] = useState(true);
-  const [mode, setMode] = useState<"human" | "agent">("human");
   const [highContrast, setHighContrast] = useState(false);
   const [quietMode, setQuietMode] = useState(false);
   const [plainLanguage, setPlainLanguage] = useState(false);
@@ -195,6 +194,7 @@ export function WorkspaceApp() {
   }
 
   const { profile, scenario, session } = workspace;
+  const mode = session.agentAccessEnabled ? "agent" : "human";
   const activeRules = activeRulesForContext(profile, session.contextId);
   const conflicts = findActiveRuleConflicts(activeRules);
   const projection = buildAgentProfileProjection(profile, session, scenario);
@@ -459,8 +459,24 @@ export function WorkspaceApp() {
           <div className="section-heading">
             <div><p className="eyebrow">02 · Owner-controlled</p><h2 id="practice-title">Practice Room</h2></div>
             <div className="segmented" role="group" aria-label="Practice mode">
-              <button aria-pressed={mode === "human"} onClick={() => setMode("human")} type="button">Human-only</button>
-              <button aria-pressed={mode === "agent"} onClick={() => setMode("agent")} type="button">Agent rehearsal</button>
+              <button
+                aria-pressed={mode === "human"}
+                disabled={busy || mode === "human"}
+                onClick={() => void run(
+                  () => owner.setAgentAccess({ ...commandInput(workspace), enabled: false }),
+                  "Human-only mode is active. Site tools cannot read or change this rehearsal.",
+                )}
+                type="button"
+              >Human-only</button>
+              <button
+                aria-pressed={mode === "agent"}
+                disabled={busy || mode === "agent"}
+                onClick={() => void run(
+                  () => owner.setAgentAccess({ ...commandInput(workspace), enabled: true }),
+                  "Agent rehearsal is active. Site tools may use only the fields you exposed.",
+                )}
+                type="button"
+              >Agent rehearsal</button>
             </div>
           </div>
 
@@ -480,7 +496,7 @@ export function WorkspaceApp() {
               </label>
               {session.state === "scenario_draft" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.submitScenarioForReview(commandInput(workspace)), "Scenario is awaiting your visible approval.")} type="button">Review this scenario</button>}
               {session.state === "awaiting_owner_review" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.approveScenario(commandInput(workspace)), "Scenario approved through the visible page.")} type="button">Approve scenario</button>}
-              {session.state === "ready" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.startHumanRehearsal(commandInput(workspace)), "Human-only rehearsal started.")} type="button">Start human rehearsal</button>}
+              {mode === "human" && session.state === "ready" && <button className="button primary" disabled={busy} onClick={() => void run(() => owner.startHumanRehearsal(commandInput(workspace)), "Human-only rehearsal started.")} type="button">Start human rehearsal</button>}
             </div>
           </div>
 
@@ -497,6 +513,7 @@ export function WorkspaceApp() {
               <div className="secondary-panel">
                 <h3>Human partner practice</h3>
                 <p>Use the same deterministic validator as an agent turn.</p>
+                <p><strong>Site tools are blocked.</strong> Switch to Agent rehearsal to grant scoped agent access.</p>
                 <button
                   className="button primary"
                   disabled={busy || !canOfferTurn}
@@ -520,7 +537,7 @@ export function WorkspaceApp() {
                   <ol className="turn-list">{acceptedTurns.map((event) => <li key={event.id}>{event.turn.segments.map(({ text }) => text).join(" ")}<small>Accepted under profile revision {session.profileRevision}</small></li>)}</ol>
                 )}
               </div>
-              <div><h3>Work beside ChatGPT through Site tools</h3><p>The agent can read only shared fields, offer validated turns, and stage suggestions. It cannot select your signal, resume, ratify, publish, share, or export.</p></div>
+              <div><h3>Work beside ChatGPT through Site tools</h3><p><strong>Scoped agent access is on.</strong> The agent can read only shared fields, offer validated turns, and stage suggestions. It cannot select your signal, resume, ratify, publish, share, or export.</p></div>
               <textarea aria-label="ChatGPT starter prompt" readOnly rows={7} value={starterPrompt} />
               <button className="button primary" onClick={() => void copyPrompt()} type="button">Copy ChatGPT starter prompt</button>
             </div>
