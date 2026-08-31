@@ -46,7 +46,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "@vitest/coverage-v8": "4.1.11",
-    "eslint": "9.39.5",
+    "eslint": "10.9.1",
     "eslint-config-next": "16.3.3",
     "fake-indexeddb": "6.2.5",
     "fast-check": "4.9.0",
@@ -55,7 +55,7 @@
     "serve": "14.2.6",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.13",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vitest": "4.1.11"
   }
 }
