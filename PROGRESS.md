@@ -436,13 +436,16 @@ Validation run:
 - CI-mode `pnpm test:e2e` passed all 36 desktop/narrow Chromium tests with one worker and no retries after the accessibility repair. The suite includes the complete judge path, landing CTA/navigation/reflow, Agent rehearsal forced-colors/reduced-motion axe checks, print, keyboard, persistence, and WebMCP registration.
 - Axe reported zero serious or critical findings in all tested release states.
 - Production dependency audit found no known vulnerabilities; peer dependency checks passed; secret scanning passed across all 100 release files.
+- Pushed implementation commit `e59970a922659134a5d4cabeb2ee478f4b70b7c7` to `origin/main` and verified exact remote parity.
+- Vercel deployment `dpl_C4irayRr1zHbk8ugJvZgg1gr5ecs` reached READY; the canonical production alias served footer build `e59970a92265`.
+- `pnpm smoke:prod` passed all production routes/assets, security headers, zero third-party origins, honest unavailable-browser status, and the offline-after-load human workflow.
+- GitHub Actions quality run `33366535531` passed install, dependency/secret audits, lint, typecheck, 76 unit tests, build, and all 36 Playwright tests for the same implementation SHA in 2m21s.
 
 Remaining risks and manual actions:
 
 - Human screen-reader and 400% zoom checks remain unverified; automated keyboard, 320 CSS-pixel reflow, forced-colors, reduced-motion, and axe evidence is green.
-- The refreshed exact SHA still needs to be pushed, deployed, and production-smoke-tested.
 - Video recording/publication and Devpost submission still require explicit owner authorization. The release tag remains deferred until submission is confirmed.
 
-Verified deployment URL: https://how-i-choose.vercel.app (the previous verified build remains live until this milestone is pushed and deployed).
+Verified deployment URL: https://how-i-choose.vercel.app (implementation build `e59970a92265`).
 
-Current next action: inspect the final diff, commit and push the green M13 milestone, deploy that exact SHA, run production smoke, and verify remote/deployment parity.
+Current next action: push this documentation closeout, deploy its exact docs-only SHA for footer parity, then leave only the human assistive-technology, authorized video, Devpost submission, and post-submission tag actions.
