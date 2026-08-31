@@ -402,6 +402,7 @@ Validation run:
 - Vercel deployment `dpl_2d6xKbWbJ4hQQXTtjr67yCAo1Vo2` reached READY and the canonical production alias served build `2997dd4e7e23`.
 - `pnpm smoke:prod` passed production routes/assets, security headers, zero third-party origins, footer SHA, unavailable-browser fallback, and offline-after-load human operation.
 - GitHub Actions quality run `33357144454` passed install, dependency/secret audits, lint, typecheck, unit tests, build, and full Playwright for the same implementation SHA in 2m05s.
+- Documentation closeout commit `1dc7f9da603efe5c1b4ea3ad5ba426cc9816770f` then passed the same local gates and GitHub Actions run `33357450603`; Vercel deployment `dpl_F5ZFEfNBiiLmAifrcXsKctNP53wg` served its matching footer SHA and passed production smoke.
 
 Remaining risks and manual actions:
 
@@ -409,6 +410,6 @@ Remaining risks and manual actions:
 - Human screen-reader and 400% zoom checks remain unverified.
 - Video publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
 
-Verified deployment URL: https://how-i-choose.vercel.app (authorization implementation build `2997dd4e7e23`; this documentation-only closeout commit will replace the visible SHA after push and is subject to the same parity checks).
+Verified deployment URL: https://how-i-choose.vercel.app
 
-Current next action: push and verify this documentation-only closeout, then request only the post-fix real ChatGPT authorization recheck and the remaining human-controlled accessibility/video/submission actions.
+Current next action: the owner rechecks the new Human-only authorization in real ChatGPT, completes any desired human assistive-technology checks, then explicitly authorizes video publication and Devpost submission when ready. No agent-controlled implementation or release task remains open.
