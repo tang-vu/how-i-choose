@@ -350,6 +350,7 @@ Work completed:
 - Found that the existing coverage command failed despite all tests passing because branch coverage was 71.74% against the configured 75% threshold.
 - Added focused tests for global/context rules, contradictory effects, policy dominance, canonicalization fallbacks, hidden agent projections, report evidence, malformed/oversized imports, and unavailable WebMCP registration. Runtime behavior was unchanged.
 - Updated pnpm from 11.20.0 to 11.24.0 and the official GitHub setup action from v4 to its Node-24 v6 release.
+- Enabled GitHub Actions update monitoring, accepted the latest CI-verified checkout 7.0.1, setup-node 7.0.0, and pnpm setup revisions, and ignored only the demonstrated-incompatible ESLint/TypeScript major lines.
 - Trialed current ESLint 10.9.1, reproduced an incompatibility crash in the Next.js React lint plugin, and restored the proven-compatible ESLint 9.39.5. `pnpm peers check` is clean after restoration; TypeScript remains 6.0.3 because `typescript-eslint` requires `<6.1`.
 - Enabled GitHub private vulnerability reporting, vulnerability alerts, automatic security fixes, secret scanning, and push protection. Optional non-provider-pattern and validity checks were not available in the current repository feature set and remain explicitly unclaimed.
 - Rechecked the host for an eligible ChatGPT desktop/built-in-browser session and NVDA installation; neither is available, so those manual checks remain external rather than fabricated.
