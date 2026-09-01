@@ -1,6 +1,6 @@
 # Progress log
 
-Updated: 2026-08-31 (Asia/Saigon)
+Updated: 2026-09-02 (Asia/Saigon)
 
 ## M0 — Environment and requirements verified
 
@@ -513,3 +513,33 @@ Remaining risks and manual actions:
 - Video upload/publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
 
 Current next action: review the local product-film master, capture the real built-in-browser tool sequence, then replace or intercut only that authentic evidence before authorized publication and submission.
+
+## M16 — Authorized submission and release closeout
+
+Work completed:
+
+- Recorded the owner's successful Devpost submission and its public project URL: https://devpost.com/software/how-i-choose
+- Recorded the owner-authorized YouTube demo URL: https://youtu.be/hBpjiDQn6k0
+- Verified the public Devpost page without an authenticated session: the final story headings are not duplicated, the YouTube video is embedded, the production/demo/repository links resolve from the page, the personal contribution is present, and the verification disclosure remains visible.
+- Reconciled the published walkthrough with the separately documented real ChatGPT verification without conflating the two evidence sources.
+
+Validation run:
+
+- `pnpm lint` and strict `pnpm typecheck` passed.
+- `pnpm test` passed all 76 unit, property, application, persistence, and WebMCP tests.
+- `pnpm build` passed and emitted static `/`, `/_not-found`, and `/demo` routes.
+- CI-mode `pnpm test:e2e` passed all 36 desktop/narrow Chromium tests with one worker, including the complete judge path, WebMCP contracts, accessibility states, print, and 320 CSS-pixel reflow.
+- Production dependency audit reported no known vulnerabilities; the secret-pattern scan passed across all 108 release files.
+- `pnpm smoke:prod` passed production routes/assets, security headers, zero third-party origins, offline-after-load human operation, and the deployed `db68ac1ac8ed` footer before this documentation-only closeout commit.
+- `git diff --check` passed; the final diff contains only `SUBMISSION.md`, `PLAN.md`, `PROGRESS.md`, and `JUDGE_CHECKLIST.md`.
+- The closeout commit is pushed to `origin/main`, verified for exact remote parity, and tagged `v0.1.0` only after the confirmed submission.
+
+Verified URLs:
+
+- Production: https://how-i-choose.vercel.app/
+- Deterministic demo: https://how-i-choose.vercel.app/demo/
+- Repository: https://github.com/tang-vu/how-i-choose
+- Devpost: https://devpost.com/software/how-i-choose
+- Video: https://youtu.be/hBpjiDQn6k0
+
+Current next action: hold the judged production stable through the judging window. Any pre-deadline submission edit remains owner-reviewed and optional.

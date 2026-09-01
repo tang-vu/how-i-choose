@@ -1,6 +1,6 @@
 # Delivery plan
 
-Updated: 2026-08-31 (Asia/Saigon)
+Updated: 2026-09-02 (Asia/Saigon)
 
 The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September 4, 2026 at 3:00 a.m. in Asia/Saigon. Judging access must remain available through September 21, 2026.
 
@@ -42,8 +42,10 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: every landing action reaches a real workflow; the executable protocol and authority boundary are visible at a glance; refreshed desktop/narrow layouts have no horizontal overflow; default, high-contrast, reduced-motion, and forced-colors states pass axe with no serious or critical findings; the refreshed synthetic preview is visually inspected.
 - [x] M14 — Run real NVDA and 400% Chrome smoke checks, repair findings, and preserve honest release evidence.
   - Validation: signed official NVDA 2026.2 runs with Chrome 151.0.7922.175; speech output confirms the critical semantic path; actual zoom measures 400%; OS-window captures and geometry checks cover landing, ready, active, paused, stopped, and Support Guide states; primary navigation has no horizontal scroll at 320 CSS pixels; human auditory review remains separately unclaimed.
-- [ ] M15 — Finish the submission video with real ChatGPT built-in-browser tool-call footage, owner review, authorized upload, Devpost submission, and the post-submission release tag.
-  - Progress: a repeatable 2:35.8 editorial preview is rendered locally from real deployed UI with MiMo TTS/ASR, subtitles, and measured audio/video QC; it deliberately does not fabricate or substitute for the required real tool-call capture.
+- [ ] M15 — Add authentic ChatGPT built-in-browser tool-call footage to the submission video.
+  - Status: optional pre-deadline enhancement; the current submission uses the verified editorial product walkthrough, while the separate real-browser run remains documented in `JUDGE_CHECKLIST.md`.
+- [x] M16 — Record the authorized Devpost submission, publish final URLs, and freeze the post-submission release target.
+  - Validation: the public Devpost page renders the final story without duplicate template headings, embeds the authorized YouTube video, exposes the production/demo/repository links, and preserves the verification disclosure; release gates and the `v0.1.0` tag are completed against the closeout commit.
 
 ## Required validation gates
 

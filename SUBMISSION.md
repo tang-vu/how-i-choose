@@ -1,10 +1,10 @@
-# Devpost submission draft
+# Devpost submission
 
 Submission title: **How I Choose: Communication practice that respects every signal.**
 
 Tagline: **My signals. My pace. How I choose.**
 
-Status: copy ready; video URL and explicit submission authorization still required.
+Status: submitted by the owner on September 1, 2026; public project page and authorized video are linked below.
 
 ## What the product does
 
@@ -72,8 +72,9 @@ Next.js App Router static export, React, strict TypeScript, Tailwind CSS, Zustan
 - Live product: https://how-i-choose.vercel.app/
 - Deterministic demo: https://how-i-choose.vercel.app/demo/
 - Public repository: https://github.com/tang-vu/how-i-choose
-- Demo video: **[placeholder — do not publish or submit without owner authorization]**
+- Devpost project: https://devpost.com/software/how-i-choose
+- Demo video: https://youtu.be/hBpjiDQn6k0
 
 ## Verification disclosure
 
-Automated domain, property, service, contract, full-browser, narrow-viewport, and axe tests are reproducible in the repository. Mocked `document.modelContext` tests do not prove discovery in the real ChatGPT built-in browser. The final submission must state the dated real-browser result from `JUDGE_CHECKLIST.md`; it must never substitute a mock result.
+Automated domain, property, service, contract, full-browser, narrow-viewport, and axe tests are reproducible in the repository. Mocked `document.modelContext` tests do not prove discovery in the real ChatGPT built-in browser. Separate owner-run checks on August 31, 2026 verified real discovery and invocation of all eight deployed Site tools, including fail-closed Human-only authorization and visible owner-enabled access; the dated record is in `JUDGE_CHECKLIST.md`.

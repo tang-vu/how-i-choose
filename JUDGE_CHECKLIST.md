@@ -1,6 +1,6 @@
 # Judge and release checklist
 
-Last updated: 2026-09-01 (Asia/Saigon)
+Last updated: 2026-09-02 (Asia/Saigon)
 
 Unchecked means **unverified**, not failed. Do not convert mocked evidence into a manual pass.
 
@@ -14,8 +14,8 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] Approximately 2:40 demo script leaves margin below three minutes.
 - [x] A local 2:35.8 editorial product-film preview uses real deployed UI, synthetic Maya data, MiMo TTS, burned and sidecar subtitles, and final-mix MiMo ASR verification; it does not claim or replace real ChatGPT tool-call footage.
 - [ ] Demo video recorded with real tool calls.
-- [ ] Video uploaded/published with explicit owner authorization.
-- [ ] Devpost entry submitted with explicit owner authorization before Sep 3, 2026, 1:00 PM PDT (Sep 4, 2026, 3:00 AM Asia/Saigon).
+- [x] Editorial demo video uploaded with explicit owner authorization: https://youtu.be/hBpjiDQn6k0
+- [x] Devpost entry submitted with explicit owner authorization before Sep 3, 2026, 1:00 PM PDT (Sep 4, 2026, 3:00 AM Asia/Saigon): https://devpost.com/software/how-i-choose
 
 ## Deterministic demo reset
 
@@ -114,6 +114,6 @@ Evidence record: the owner opened the deployed synthetic demo in ChatGPT's built
 - [x] Worktree is clean at handoff.
 - [x] Latest local `main` equals `origin/main` at handoff.
 - [x] GitHub description and homepage match the release.
-- [ ] Submission copy has the final live and authorized video URLs.
-- [ ] Owner has explicitly authorized Devpost submission.
-- [ ] After confirmed submission only: create the release tag and hold the judged deployment stable.
+- [x] Submission copy has the final live, repository, Devpost, and authorized video URLs.
+- [x] Owner explicitly authorized and completed the Devpost submission.
+- [x] After confirmed submission only: create and push `v0.1.0` from the closeout commit, then hold the judged deployment stable.
