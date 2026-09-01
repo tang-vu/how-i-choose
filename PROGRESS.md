@@ -485,3 +485,31 @@ Remaining risks and manual actions:
 Verified deployment URL: https://how-i-choose.vercel.app (currently the pre-M14 build; the exact M14 SHA will replace it after push).
 
 Current next action: run the full release gates, commit and push M14, deploy its exact SHA, verify production/CI/remote parity, and leave only the explicitly human/authorized release actions.
+
+## M15 — Submission video production preview
+
+Work completed:
+
+- Added a repeatable, secret-safe local video pipeline for deployed-product capture, scene composition, MiMo-V2.5-TTS narration, per-segment MiMo-V2.5-ASR checks, 1080p H.264 rendering, burned and sidecar subtitles, an original synthesized ambient bed, and final mixed-audio ASR verification.
+- Captured ten 1920-by-1080 editorial frames from the real production UI using only visible human controls. The frames show the synthetic Maya profile and do not expose accounts, tokens, emails, notifications, or unrelated tabs.
+- Kept the evidence boundary explicit: the product film describes verified behavior without fabricating ChatGPT chrome, Site-tool calls, or receipts. It does not satisfy the still-unchecked real-tool-call recording item.
+- Directed the built-in Chloe voice at 145–155 words per minute. The first take exceeded the three-minute limit and was rejected; the revised narration produced a 2:35.8 master.
+- Tightened ASR acceptance to 5% word error and regenerated the Maya signal line after its first transcription was semantically unclear. The corrected segment transcribed exactly after normalization.
+- Rendered `video-output/how-i-choose-submission-preview.mp4` with matching `.srt`; generated media remains ignored by Git and has not been uploaded or published.
+
+Validation run:
+
+- All ten final narration segments passed MiMo-V2.5-ASR; nine normalized to zero word error and the complete mixed master passed at 0.95% WER.
+- Final media probe: H.264, 1920 by 1080, 30 fps; AAC mono at 48 kHz; duration 155.80 seconds; size 45,361,209 bytes.
+- FFmpeg decoded the complete master with zero errors. Six timeline frames were extracted and visually inspected; subtitles remained legible without obscuring the editorial headline or critical product state.
+- Measured integrated loudness is -16.1 LUFS with -1.5 dBFS true peak. The final SHA-256 is `ac5ec6b2b563467b76f9c2492892d5730fac863badbcafadd5bbec9452113c82`.
+- `pnpm lint`, `pnpm typecheck`, and all 76 unit/property/application/persistence/WebMCP tests passed.
+- `pnpm build` passed and emitted static `/`, `/_not-found`, and `/demo` routes. CI-mode `pnpm test:e2e` passed all 36 desktop/narrow Chromium tests with one worker and no retries.
+- Production dependency audit found no known vulnerabilities; secret scanning passed across all 108 tracked and untracked release files; `git diff --check` passed.
+
+Remaining risks and manual actions:
+
+- The local product film is not the final integrity-complete submission video because it contains no real ChatGPT built-in-browser tool-call footage. That capture must not be simulated.
+- Video upload/publication, Devpost submission, and the post-submission release tag still require explicit owner authorization.
+
+Current next action: review the local product-film master, capture the real built-in-browser tool sequence, then replace or intercut only that authentic evidence before authorized publication and submission.

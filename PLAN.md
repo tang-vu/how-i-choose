@@ -42,6 +42,8 @@ The challenge deadline is September 3, 2026 at 1:00 p.m. PDT, which is September
   - Validation: every landing action reaches a real workflow; the executable protocol and authority boundary are visible at a glance; refreshed desktop/narrow layouts have no horizontal overflow; default, high-contrast, reduced-motion, and forced-colors states pass axe with no serious or critical findings; the refreshed synthetic preview is visually inspected.
 - [x] M14 — Run real NVDA and 400% Chrome smoke checks, repair findings, and preserve honest release evidence.
   - Validation: signed official NVDA 2026.2 runs with Chrome 151.0.7922.175; speech output confirms the critical semantic path; actual zoom measures 400%; OS-window captures and geometry checks cover landing, ready, active, paused, stopped, and Support Guide states; primary navigation has no horizontal scroll at 320 CSS pixels; human auditory review remains separately unclaimed.
+- [ ] M15 — Finish the submission video with real ChatGPT built-in-browser tool-call footage, owner review, authorized upload, Devpost submission, and the post-submission release tag.
+  - Progress: a repeatable 2:35.8 editorial preview is rendered locally from real deployed UI with MiMo TTS/ASR, subtitles, and measured audio/video QC; it deliberately does not fabricate or substitute for the required real tool-call capture.
 
 ## Required validation gates
 

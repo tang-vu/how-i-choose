@@ -1,0 +1,77 @@
+{
+  "title": "How I Choose: Communication practice that respects every signal",
+  "voice": "Chloe",
+  "style": "Warm, intelligent documentary narrator. Calm confidence, precise articulation, restrained emotion, and a premium editorial tone. Speak fluidly at 145 to 155 words per minute with minimal pauses, but never sound rushed. Clearly enunciate person, partner, versioned, ratification, and provenance. Pronounce Maya as MY-uh and WebMCP as web M C P. Never sound theatrical, salesy, or sentimental.",
+  "segments": [
+    {
+      "id": "01-inversion",
+      "chapter": "THE INVERSION",
+      "headline": "Did the partner adapt?",
+      "visual": "landing",
+      "text": "Most communication tools ask whether the person performed correctly. How I Choose asks a different question: did the partner adapt? It is a local-first rehearsal workspace built around the person's signals, pace, and words."
+    },
+    {
+      "id": "02-protocol",
+      "chapter": "A PERSON-AUTHORED PROTOCOL",
+      "headline": "Visible. Editable. Revisioned.",
+      "visual": "rules",
+      "text": "This synthetic profile belongs to Maya. She asks for text first, one short literal question, no more than two options, and explicit handling of every signal. The protocol is visible, editable, and versioned."
+    },
+    {
+      "id": "03-authority",
+      "chapter": "NARROW AGENT AUTHORITY",
+      "headline": "Human-only means blocked",
+      "visual": "authority",
+      "text": "Agent access is never assumed. Human-only blocks every Site tool until the person enables Agent rehearsal. Even then, the agent receives only exposed fields. It cannot answer, select a signal, resume, ratify, publish, share, or export."
+    },
+    {
+      "id": "04-guardrails",
+      "chapter": "DETERMINISTIC GUARDRAILS",
+      "headline": "Invalid turns never appear",
+      "visual": "practice-ready",
+      "text": "The guardrails do real work. A long, two-question turn is rejected before it can appear. The result names both failures: too many questions and a breached word limit."
+    },
+    {
+      "id": "05-repair",
+      "chapter": "STRUCTURED REPAIR",
+      "headline": "One engine, every path",
+      "visual": "accepted-turn",
+      "text": "A repaired, one-question turn passes the same engine used by human-only practice. Only then does the question appear in the Practice Room."
+    },
+    {
+      "id": "06-signal",
+      "chapter": "THE PERSON IS THE SOURCE OF TRUTH",
+      "headline": "Not sure means not sure",
+      "visual": "signal",
+      "text": "Maya herself selects a semantic signal. When she chooses Amber, the system records exactly not sure. The partner must acknowledge it and rephrase without changing the choice's meaning."
+    },
+    {
+      "id": "07-revision",
+      "chapter": "RECOVERABLE BY DESIGN",
+      "headline": "Fresh state beats stale intent",
+      "visual": "revision",
+      "text": "Maya can change her protocol during rehearsal. A stale write is rejected instead of overwriting her decision. After reading the new revision, the partner adapts to text only."
+    },
+    {
+      "id": "08-stop",
+      "chapter": "STOP IS TERMINAL",
+      "headline": "No inference. No override.",
+      "visual": "stopped",
+      "text": "The red Stop signal is immediate and terminal. Further turns are blocked. Silence and delay never create an answer, agreement, or permission."
+    },
+    {
+      "id": "09-evidence",
+      "chapter": "PARTNER-FOCUSED EVIDENCE",
+      "headline": "The person is never scored",
+      "visual": "audit",
+      "text": "The audit evaluates partner adherence only: violations, repairs, signal acknowledgment, revision recovery, and Stop honored. It never scores the person's comprehension, capacity, consistency, emotion, diagnosis, or consent."
+    },
+    {
+      "id": "10-owner",
+      "chapter": "OWNER-CONTROLLED THROUGH THE END",
+      "headline": "Suggestions remain drafts",
+      "visual": "guide",
+      "text": "An agent may stage a provenance-linked improvement, but every change stays a draft until the person reviews it. The Support Guide is checked against accepted rules. Ratification is a visible owner workflow, never a Site tool. How I Choose is open-alpha communication practice, not a consent system."
+    }
+  ]
+}

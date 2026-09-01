@@ -1,6 +1,6 @@
 # Judge and release checklist
 
-Last updated: 2026-08-31 (Asia/Saigon)
+Last updated: 2026-09-01 (Asia/Saigon)
 
 Unchecked means **unverified**, not failed. Do not convert mocked evidence into a manual pass.
 
@@ -12,6 +12,7 @@ Unchecked means **unverified**, not failed. Do not convert mocked evidence into 
 - [x] English project and submission materials are prepared.
 - [x] Public HTTPS product works without an app account: https://how-i-choose.vercel.app/
 - [x] Approximately 2:40 demo script leaves margin below three minutes.
+- [x] A local 2:35.8 editorial product-film preview uses real deployed UI, synthetic Maya data, MiMo TTS, burned and sidecar subtitles, and final-mix MiMo ASR verification; it does not claim or replace real ChatGPT tool-call footage.
 - [ ] Demo video recorded with real tool calls.
 - [ ] Video uploaded/published with explicit owner authorization.
 - [ ] Devpost entry submitted with explicit owner authorization before Sep 3, 2026, 1:00 PM PDT (Sep 4, 2026, 3:00 AM Asia/Saigon).
